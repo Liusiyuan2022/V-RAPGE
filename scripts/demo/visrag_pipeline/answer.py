@@ -91,7 +91,7 @@ def main():
     
     knowledge_base_path = conf.DATASTORE
     
-    query = "描述一下解码器是什么，信号的输入输出是什么"
+    query = "位一计数是什么，能举个例子么"
     topk = conf.TOP_K
     
     # 调用检索函数

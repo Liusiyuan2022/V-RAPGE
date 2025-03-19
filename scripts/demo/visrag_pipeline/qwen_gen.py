@@ -6,6 +6,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 import os
 import torch
 from memlog import log_memory
+from utils import *
 
 
 def qwen_answer_question(images_path_topk, query):
@@ -37,10 +38,10 @@ def qwen_answer_question(images_path_topk, query):
     # max_pixels = 1280*28*28
     # processor = AutoProcessor.from_pretrained("Qwen/Qwen2-VL-2B-Instruct", min_pixels=min_pixels, max_pixels=max_pixels)
 
-    img_path = images_path_topk[0]
+    combined_img_path_tmp = all_path_to_one_create(images_path_topk)
     
     content = [
-                {"type": "image", "image": img_path,},
+                {"type": "image", "image": combined_img_path_tmp,},
                 {"type": "text" , "text" : query    },
             ]
     
@@ -79,6 +80,8 @@ def qwen_answer_question(images_path_topk, query):
             generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False
         )
     log_memory("after Qwen generate")
+    
+    all_path_to_one_remove()
     
     
     return output_text[0]
