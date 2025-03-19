@@ -1,13 +1,15 @@
 from transformers import Qwen2VLForConditionalGeneration, AutoTokenizer, AutoProcessor
 from qwen_vl_utils import process_vision_info
 import conf
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
+import os
+import torch
+from memlog import log_memory
+
+
 def qwen_answer_question(images_path_topk, query):
-
     # default: Load the model on the available device(s)
-    model = Qwen2VLForConditionalGeneration.from_pretrained(
-        "Qwen/Qwen2-VL-2B-Instruct", torch_dtype="auto", device_map="auto",cache_dir=conf.CACHE_DIR
-    ).to("cuda")
-
     # We recommend enabling flash_attention_2 for better acceleration and memory saving, especially in multi-image and video scenarios.
     # model = Qwen2VLForConditionalGeneration.from_pretrained(
     #     "Qwen/Qwen2-VL-2B-Instruct",
@@ -15,6 +17,17 @@ def qwen_answer_question(images_path_topk, query):
     #     attn_implementation="flash_attention_2",
     #     device_map="auto",
     # )
+    
+    #emm flash_attention_2 will cause torch reinstall. 
+    
+    log_memory("before load Qwen model")
+    model = Qwen2VLForConditionalGeneration.from_pretrained(
+        "Qwen/Qwen2-VL-2B-Instruct", torch_dtype=torch.bfloat16, device_map="auto",cache_dir=conf.CACHE_DIR,
+        attn_implementation="flash_attention_2",
+    )
+    log_memory("after load Qwen model")
+
+
 
     # default processer
     processor = AutoProcessor.from_pretrained("Qwen/Qwen2-VL-2B-Instruct", cache_dir=conf.CACHE_DIR)
@@ -25,21 +38,16 @@ def qwen_answer_question(images_path_topk, query):
     # processor = AutoProcessor.from_pretrained("Qwen/Qwen2-VL-2B-Instruct", min_pixels=min_pixels, max_pixels=max_pixels)
 
     img_path = images_path_topk[0]
-    # 先处理一下img的大小，resize成224*224
-    # from PIL import Image
-    # img = Image.open(img_path)
-    # img = img.resize((224, 224))
-    # img.save(img_path)
+    
+    content = [
+                {"type": "image", "image": img_path,},
+                {"type": "text" , "text" : query    },
+            ]
+    
     messages = [
         {
             "role": "user",
-            "content": [
-                {
-                    "type": "image",
-                    "image": img_path,
-                },
-                {"type": "text", "text": query},
-            ],
+            "content": content,
         }
     ]
 
@@ -55,14 +63,22 @@ def qwen_answer_question(images_path_topk, query):
         padding=True,
         return_tensors="pt",
     )
-    inputs = inputs.to("cuda")
+    
+    model.eval()
 
-    # Inference: Generation of the output
-    generated_ids = model.generate(**inputs, max_new_tokens=128)
-    generated_ids_trimmed = [
-        out_ids[len(in_ids) :] for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
-    ]
-    output_text = processor.batch_decode(
-        generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False
-    )
+    # 使用torch.no_grad()以节省内存
+    log_memory("before Qwen generate")
+    with torch.no_grad():
+        # Inference: Generation of the output
+        generated_ids = model.generate(**inputs, max_new_tokens=conf.MAX_TOKENS)
+        log_memory("after Qwen generate call")
+        generated_ids_trimmed = [
+            out_ids[len(in_ids):] for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
+        ]
+        output_text = processor.batch_decode(
+            generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False
+        )
+    log_memory("after Qwen generate")
+    
+    
     return output_text[0]
