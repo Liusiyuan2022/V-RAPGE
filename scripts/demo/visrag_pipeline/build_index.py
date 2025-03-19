@@ -62,7 +62,6 @@ def add_pdfs(pdf_dir):
 
 model_path = 'openbmb/VisRAG-Ret'
 
-device = 'cuda'
 
 # while(True):
 #     knowledge_base_path = input("Please enter the knowledge base path in which we build the index: ")
@@ -82,11 +81,10 @@ os.makedirs(knowledge_base_path, exist_ok=True)
 pdf_dir = conf.PDF_DIR
 
 print("emb model load begin...")
-tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True, cache_dir=conf.CACHE_DIR)
+tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True, device_map="auto", cache_dir=conf.CACHE_DIR)
 model = AutoModel.from_pretrained(model_path, trust_remote_code=True,
-    attn_implementation='sdpa', torch_dtype=torch.bfloat16, cache_dir=conf.CACHE_DIR)
+    attn_implementation='sdpa',device_map="auto", torch_dtype=torch.bfloat16, cache_dir=conf.CACHE_DIR,)
 model.eval()
-model.to(device)
 print("emb model load success!")
 
 add_pdfs(pdf_dir)

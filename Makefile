@@ -9,7 +9,7 @@ test:
 	sbatch  --gpus=$(GPU_NUM) ./run_cmd/test.sh
 
 index:
-	sbatch  --gpus=$(GPU_NUM) ./run_cmd/build_index.sh
+	sbatch  --gpus=1 ./run_cmd/build_index.sh
 
 clean:
 	rm slurm-*.out
