@@ -91,7 +91,7 @@ def main():
     
     knowledge_base_path = conf.DATASTORE
     
-    query = "位一计数是什么，能举个例子么"
+    query = "内质网膜与核膜，细胞膜的位置关系是怎么样的，谁在里面谁在外面?"
     topk = conf.TOP_K
     
     # 调用检索函数
@@ -108,7 +108,7 @@ def main():
 
     # 保存结果
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-    answer_path = os.path.join(knowledge_base_path, f'answer/{timestamp}')
+    answer_path = os.path.join(conf.RESULT_DIR + f'/{timestamp}')
     os.makedirs(answer_path, exist_ok=True)
     with open(os.path.join(answer_path, f"answer.json"), 'w') as f:
         f.write(json.dumps({
