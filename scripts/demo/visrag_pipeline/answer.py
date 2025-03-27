@@ -48,15 +48,15 @@ def retrieve(knowledge_base_path, query, topk, model, tokenizer, device):
 
     return images_path_topk
 
-def answer_question(images, question):
-    global gen_model, gen_tokenizer
-    msgs = [{'role': 'user', 'content': [question, *images]}]
-    answer = gen_model.chat(
-        image=None,
-        msgs=msgs,
-        tokenizer=gen_tokenizer
-    )
-    return answer
+# def answer_question(images, question):
+#     global gen_model, gen_tokenizer
+#     msgs = [{'role': 'user', 'content': [question, *images]}]
+#     answer = gen_model.chat(
+#         image=None,
+#         msgs=msgs,
+#         tokenizer=gen_tokenizer
+#     )
+#     return answer
 
 
 def load_models():
@@ -91,7 +91,7 @@ def main():
     
     knowledge_base_path = conf.DATASTORE
     
-    query = "内质网膜与核膜，细胞膜的位置关系是怎么样的，谁在里面谁在外面?"
+    query = "弃耕农田上面会不会发生群落演替，演替类型是什么，请说一下这个例子中演替的几个阶段"
     topk = conf.TOP_K
     
     # 调用检索函数
