@@ -5,3 +5,7 @@ TOP_K = 3
 CACHE_DIR = "../Localmodels"
 DEBUG = True
 MAX_TOKENS = 512
+TEST_DIR = "scripts/demo/test"
+BASE_DIR = "/home/bingxing2/home/scx7655/workspace/VisRAG"
+QA_BATCH_SIZE = 20
+QA_IMG_NUM = 3

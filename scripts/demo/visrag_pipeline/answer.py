@@ -11,7 +11,7 @@ import json
 import datetime
 from utils import encode
 import conf
-from deepseek_api import deepseek_answer_question
+from ds_gen import deepseek_answer_question
 from transformers import AutoTokenizer, AutoProcessor
 from qwen_vl_utils import process_vision_info
 from qwen_gen import qwen_answer_question
