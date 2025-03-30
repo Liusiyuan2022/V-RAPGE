@@ -9,7 +9,7 @@ from memlog import log_memory
 from utils import *
 
 
-def qwen_answer_question(images_path_topk, query):
+def qwen_answer_question(images_path_topk, query, model, processor):
     # default: Load the model on the available device(s)
     # We recommend enabling flash_attention_2 for better acceleration and memory saving, especially in multi-image and video scenarios.
     # model = Qwen2VLForConditionalGeneration.from_pretrained(
@@ -21,17 +21,6 @@ def qwen_answer_question(images_path_topk, query):
     
     #emm flash_attention_2 will cause torch reinstall. 
     
-    log_memory("before load Qwen model")
-    model = Qwen2VLForConditionalGeneration.from_pretrained(
-        "Qwen/Qwen2-VL-2B-Instruct", torch_dtype=torch.bfloat16, device_map="auto",cache_dir=conf.CACHE_DIR,
-        attn_implementation="flash_attention_2",
-    )
-    log_memory("after load Qwen model")
-
-
-
-    # default processer
-    processor = AutoProcessor.from_pretrained("Qwen/Qwen2-VL-2B-Instruct", cache_dir=conf.CACHE_DIR)
 
     # The default range for the number of visual tokens per image in the model is 4-16384. You can set min_pixels and max_pixels according to your needs, such as a token count range of 256-1280, to balance speed and memory usage.
     # min_pixels = 256*28*28
@@ -40,9 +29,11 @@ def qwen_answer_question(images_path_topk, query):
 
     combined_img_path_tmp = all_path_to_one_create(images_path_topk)
     
+    # prompt限制一下输入长度，精简
+    RESTRICT = "回答要精简，控制在50字以内"
     content = [
                 {"type": "image", "image": combined_img_path_tmp,},
-                {"type": "text" , "text" : query    },
+                {"type": "text" , "text" : query + RESTRICT},
             ]
     
     messages = [

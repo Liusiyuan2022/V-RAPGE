@@ -11,116 +11,97 @@ import json
 import datetime
 from utils import encode
 import conf
-from ds_gen import deepseek_answer_question
+# from ds_gen import deepseek_answer_question
 from transformers import AutoTokenizer, AutoProcessor
+from transformers import Qwen2VLForConditionalGeneration, AutoTokenizer, AutoProcessor
 from qwen_vl_utils import process_vision_info
 from qwen_gen import qwen_answer_question
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 from memlog import log_memory
+from retrieve import *
+import json
+from tqdm import tqdm 
 
-
-def retrieve(knowledge_base_path, query, topk, model, tokenizer, device):
-    model.eval()
-
-    if not os.path.exists(knowledge_base_path):
-        return None
-    
-    # 读取索引到图像文件名的映射
-    with open(os.path.join(knowledge_base_path, 'index2img_filename.txt'), 'r') as f:
-        index2img_filename = f.read().split('\n')
-    
-    doc_reps = np.load(os.path.join(knowledge_base_path, 'reps.npy'))
-    doc_reps = torch.from_numpy(doc_reps).to(device)
-
-    query_with_instruction = "Represent this query for retrieving relevant document: " + query
-    with torch.no_grad():
-        query_rep = torch.Tensor(encode(model, tokenizer, [query_with_instruction])).to(device)
-
-    similarities = torch.matmul(query_rep, doc_reps.T)
-
-    topk_values, topk_doc_ids = torch.topk(similarities, k=topk)
-
-    topk_values_np = topk_values.squeeze(0).cpu().numpy()
-    topk_doc_ids_np = topk_doc_ids.squeeze(0).cpu().numpy()
-
-    images_path_topk = [os.path.join(knowledge_base_path, index2img_filename[idx]) for idx in topk_doc_ids_np]
-
-    return images_path_topk
-
-# def answer_question(images, question):
-#     global gen_model, gen_tokenizer
-#     msgs = [{'role': 'user', 'content': [question, *images]}]
-#     answer = gen_model.chat(
-#         image=None,
-#         msgs=msgs,
-#         tokenizer=gen_tokenizer
-#     )
-#     return answer
-
-
-def load_models():
-    model_path = 'openbmb/VisRAG-Ret'
-    device = f'cuda:0' # use the first GPU for retrieval
-
-    print(f"VisRAG-Ret load begin...")
-    tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True, cache_dir=conf.CACHE_DIR)
-    
-    model = AutoModel.from_pretrained(model_path, trust_remote_code=True,
-        attn_implementation='sdpa', torch_dtype=torch.bfloat16, cache_dir=conf.CACHE_DIR)
-    
-    model.to(device)
-    model.eval()
-    print(f"VisRAG-Ret load success!")
-    
-    return model, tokenizer, device
 
 model_path = 'openbmb/VisRAG-Ret'
 # gen_model_path = 'openbmb/MiniCPM-V-2_6'
 # gen_model_path = 'Qwen/Qwen2-VL-2B-Instruct'
 
-knowledge_base_path = conf.DATASTORE
+def load_qa_pairs(jsonl_file_path):
+    qa_pairs = []
+    with open(jsonl_file_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            # 解析每一行 JSON 数据
+            data = json.loads(line.strip())
+            # 将 question 和 answer 添加到 qa_pairs 列表
+            qa_pairs.append((
+                data.get("question", "N/A"),
+                data.get("answer", "N/A")
+            ))
+    return qa_pairs
 
-
+def export_result(answer_path, query, images_path_topk, answer, reference_answer):
+   
+    with open(os.path.join(answer_path, f"answer.jsonl"), 'a') as f:
+        f.write(json.dumps({
+            'query': query, 
+            'retrieved_images': images_path_topk,
+            'answer': answer,
+            'reference': reference_answer
+        }, indent=4, ensure_ascii=False))
+    # save images
+    # images_topk = [Image.open(i) for i in images_path_topk]
+    # for idx, image in enumerate(images_topk):
+    #     image.save(os.path.join(answer_path, os.path.basename(images_path_topk[idx])))
+    
+    
+    
 def main():
     
-    # 加载模型
+    # query = "弃耕农田上面会不会发生群落演替，演替类型是什么，请说一下这个例子中演替的几个阶段"
+    
+    qa_pairs = load_qa_pairs(os.path.join(conf.TEST_DIR, 'test_QA.jsonl'))
+    
+    # 加载Ret模型
     log_memory("before load VisRAG-Ret model")
-    model, tokenizer, device = load_models()
+    model_ret, tokenizer, device = load_ret_models()
     log_memory("after load VisRAG-Ret model")
     
-    knowledge_base_path = conf.DATASTORE
     
-    query = "弃耕农田上面会不会发生群落演替，演替类型是什么，请说一下这个例子中演替的几个阶段"
-    topk = conf.TOP_K
+    # 加载Gen模型
+    log_memory("before load Qwen model")
+    model_gen = Qwen2VLForConditionalGeneration.from_pretrained(
+        "Qwen/Qwen2-VL-2B-Instruct", torch_dtype=torch.bfloat16, device_map="auto",cache_dir=conf.CACHE_DIR,
+        attn_implementation="flash_attention_2",
+    )
+    # default processer
+    processor = AutoProcessor.from_pretrained("Qwen/Qwen2-VL-2B-Instruct", cache_dir=conf.CACHE_DIR)
+    log_memory("after load Qwen model")
     
-    # 调用检索函数
-    images_path_topk = retrieve(knowledge_base_path, query, topk, model, tokenizer, device)
-    images_topk = [Image.open(i) for i in images_path_topk]
     
-    # print the size
-    img_0 = images_topk[0]
-    print(f"Image size: {img_0.size}")
-    
-    # 生成答案
-    answer = qwen_answer_question(images_path_topk, query)
-    print(answer)
-
+    # answer_log目录下的result.jsonl 作为存储question， answer， reference的jsonl文件
     # 保存结果
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     answer_path = os.path.join(conf.RESULT_DIR + f'/{timestamp}')
     os.makedirs(answer_path, exist_ok=True)
-    with open(os.path.join(answer_path, f"answer.json"), 'w') as f:
-        f.write(json.dumps({
-            'query': query, 
-            'retrieved_images': images_path_topk,
-            'answer': answer
-        }, indent=4, ensure_ascii=False))
-    # save images
-    for idx, image in enumerate(images_topk):
-        image.save(os.path.join(answer_path, os.path.basename(images_path_topk[idx])))
-    print(f"Answer saved at {answer_path}/{timestamp}.json")
     
+    
+    for query, reference_answer in tqdm(qa_pairs, desc="Processing QA Pairs"):
+        # 调用检索函数
+        images_path_topk = retrieve(query, model_ret, tokenizer, device)
+        
+        
+        # print the size
+        # img_0 = images_topk[0]
+        # print(f"Image size: {img_0.size}")
+
+        # 生成答案
+        answer = qwen_answer_question(images_path_topk, query, model_gen, processor)
+        # print(answer)
+        export_result(answer_path, query, images_path_topk, answer, reference_answer)
+        
+    print(f"Answer saved at {answer_path}/{timestamp}/result.json")
 
 if __name__ == "__main__":
     main()
