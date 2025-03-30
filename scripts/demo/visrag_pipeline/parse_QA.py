@@ -35,7 +35,7 @@ def parse_jsonl(input_dir, output_dir):
                             with open(output_dir, 'a') as out_f:
                                 out_f.write(json.dumps({
                                     "question": question,
-                                    "reasoning": reasoning,
+                                    # "reasoning": reasoning,
                                     "answer": answer
                                 }, ensure_ascii=False) + '\n')
                             
