@@ -30,7 +30,7 @@ def qwen_answer_question(images_path_topk, query, model, processor):
     combined_img_path_tmp = all_path_to_one_create(images_path_topk)
     
     # prompt限制一下输入长度，精简
-    RESTRICT = "回答要精简，控制在50字以内"
+    RESTRICT = "回答控制在100字以内"
     content = [
                 {"type": "image", "image": combined_img_path_tmp,},
                 {"type": "text" , "text" : query + RESTRICT},
