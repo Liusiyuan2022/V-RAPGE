@@ -49,7 +49,7 @@ def export_result(answer_path, query, images_path_topk, answer, reference_answer
             'retrieved_images': images_path_topk,
             'answer': answer,
             'reference': reference_answer
-        }, indent=4, ensure_ascii=False))
+        },ensure_ascii=False) + '\n')
     # save images
     # images_topk = [Image.open(i) for i in images_path_topk]
     # for idx, image in enumerate(images_topk):
