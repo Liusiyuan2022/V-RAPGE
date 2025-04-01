@@ -9,7 +9,7 @@ def parse_jsonl(input_dir, output_dir):
     # 先清空输出文件
     with open(output_dir, 'w') as out_f:
         out_f.write('')
-    i = 0    
+    i = 1    
     with open(input_dir, 'r') as f:
         for line in f:
             data = json.loads(line)
