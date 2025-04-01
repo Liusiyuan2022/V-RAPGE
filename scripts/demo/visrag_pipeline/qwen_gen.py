@@ -59,7 +59,7 @@ def qwen_answer_question(images_path_topk, query, model, processor):
     model.eval()
 
     # 使用torch.no_grad()以节省内存
-    log_memory("before Qwen generate")
+    # log_memory("before Qwen generate")
     with torch.no_grad():
         # Inference: Generation of the output
         generated_ids = model.generate(**inputs, max_new_tokens=conf.MAX_TOKENS)
@@ -70,7 +70,7 @@ def qwen_answer_question(images_path_topk, query, model, processor):
         output_text = processor.batch_decode(
             generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False
         )
-    log_memory("after Qwen generate")
+    # log_memory("after Qwen generate")
     
     all_path_to_one_remove()
     
