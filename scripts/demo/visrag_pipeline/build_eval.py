@@ -10,7 +10,7 @@ import time
 ZHIPU_API_KEY="28eb0cace1314b2bbc1824aa98b823a0.eOwjqu86fz9DtMRJ"
 
 
-ANSWER_ID = "20250401124728"
+ANSWER_ID = "Qwen-VL-2B_RAG_EE_20250402152431"
 
 PROMPT = """You are an impartial judge. 
 [Task]: Evaluate the quality of the AI assistant's response to the user's question based on helpfulness, relevance, accuracy, and detail. 

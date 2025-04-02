@@ -13,7 +13,7 @@ from utils import encode
 import conf
 # from ds_gen import deepseek_answer_question
 from transformers import AutoTokenizer, AutoProcessor
-from transformers import Qwen2VLForConditionalGeneration, AutoTokenizer, AutoProcessor
+from transformers import Qwen2VLForConditionalGeneration, Qwen2_5_VLForConditionalGeneration, AutoTokenizer, AutoProcessor
 from qwen_vl_utils import process_vision_info
 from qwen_gen import qwen_answer_question
 import torch.distributed as dist
@@ -61,29 +61,47 @@ def main():
     
     # query = "弃耕农田上面会不会发生群落演替，演替类型是什么，请说一下这个例子中演替的几个阶段"
     
-    qa_pairs = load_qa_pairs(os.path.join(conf.TEST_DIR, 'test_QA.jsonl'))
+    print(f"Using{conf.MODEL_TYPE} model, RAG settings: {conf.RAG_EN}, test field: {conf.TEST_FIELD}")
+    
+    
+    qa_pairs = load_qa_pairs(os.path.join(conf.TEST_DIR, f'test_QA_{conf.TEST_FIELD}.jsonl'))
     
     # 加载Ret模型
     log_memory("before load VisRAG-Ret model")
     model_ret, tokenizer, device = load_ret_models()
     log_memory("after load VisRAG-Ret model")
     
-    
     # 加载Gen模型
-    log_memory("before load Qwen model")
-    model_gen = Qwen2VLForConditionalGeneration.from_pretrained(
-        "Qwen/Qwen2-VL-2B-Instruct", torch_dtype=torch.bfloat16, device_map="auto",cache_dir=conf.CACHE_DIR,
-        attn_implementation="flash_attention_2",
-    )
-    # default processer
-    processor = AutoProcessor.from_pretrained("Qwen/Qwen2-VL-2B-Instruct", cache_dir=conf.CACHE_DIR)
-    log_memory("after load Qwen model")
+    log_memory(f"before load {conf.MODEL_TYPE} model")
+    
+    
+    
+    if conf.MODEL_TYPE == "Qwen-VL-2B":
+        # Qwen2-VL-2B-Instruct
+        model_gen = Qwen2VLForConditionalGeneration.from_pretrained(
+            "Qwen/Qwen2-VL-2B-Instruct", torch_dtype=torch.bfloat16, device_map="auto",cache_dir=conf.CACHE_DIR,
+            attn_implementation="flash_attention_2",
+        )
+        # default processer
+        processor = AutoProcessor.from_pretrained("Qwen/Qwen2-VL-2B-Instruct", cache_dir=conf.CACHE_DIR)
+        
+    elif conf.MODEL_TYPE == "Qwen-VL-7B":
+        #Qwen2.5-VL-7B-Instruct
+        model_gen =  Qwen2_5_VLForConditionalGeneration.from_pretrained(
+            os.path.join(conf.CACHE_DIR, "models--Qwen--Qwen2.5-VL-7B-Instruct"),torch_dtype=torch.bfloat16, device_map="auto",attn_implementation="flash_attention_2",
+        )
+        processor = AutoProcessor.from_pretrained(os.path.join(conf.CACHE_DIR, "models--Qwen--Qwen2.5-VL-7B-Instruct"))
+    else:
+        raise ValueError(f"Unsupported model type: {conf.MODEL_TYPE}")
+        
+    log_memory(f"after load {conf.MODEL_TYPE} model")
+
     
     
     # answer_log目录下的result.jsonl 作为存储question， answer， reference的jsonl文件
     # 保存结果
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-    answer_path = os.path.join(conf.RESULT_DIR + f'/{timestamp}')
+    answer_path = os.path.join(conf.RESULT_DIR + f'/{conf.MODEL_TYPE}_{"RAG" if conf.RAG_EN else "NOR"}_{conf.TEST_FIELD}_{timestamp}')
     os.makedirs(answer_path, exist_ok=True)
     
     
@@ -97,7 +115,8 @@ def main():
         # print(f"Image size: {img_0.size}")
 
         # 生成答案
-        answer = qwen_answer_question(images_path_topk, query, model_gen, processor)
+        if conf.MODEL_TYPE == "Qwen-VL-2B":
+            answer = qwen_answer_question(images_path_topk, query, model_gen, processor)
         # print(answer)
         export_result(answer_path, query, images_path_topk, answer, reference_answer)
         

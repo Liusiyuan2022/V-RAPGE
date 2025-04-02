@@ -13,7 +13,7 @@ ZHIPU_API_KEY="28eb0cace1314b2bbc1824aa98b823a0.eOwjqu86fz9DtMRJ"
 PROMPT = """Based on the document images provided, complete the following task:
 [Task]: Generate question-reasoning-answer pairs from different perspectives.
 [Constraints]: 
-1. Questions must be based on the document images' content. Avoid directly referencing specific elements (e.g., "this image", "given img2-7" or "this table"). Ensure the answers can be confidently derived from the images.
+1. Questions must be based on the document images' content. Avoid directly referencing specific elements (e.g., "this image", "given img2-7" or "this table"). Ensure the answers can be confidently derived from the images. And cross-page and numeric questions(if any) are encouraged.
 2. Reasoning should explain why the question is meaningful and how to find the answer step by step.
 3. Answers must be based on the document images and follow the specified format.
 4. Generate 1 to 3 question-reasoning-answer pairs, depending on the meaningfulness of the questions.
@@ -23,14 +23,14 @@ PROMPT = """Based on the document images provided, complete the following task:
 {
     "result": [
         {
-            "question": "克里克的实验说明了什么关于遗传密码的发现？",
-            "reasoning": "从所给文档可见，克里克的实验通过使用蛋白质体外合成技术，揭示了遗传密码的三个碱基编码一个氨基酸的规律。这一发现对理解遗传信息如何被翻译成蛋白质至关重要。",
-            "answer": "克里克的实验说明了遗传密码中三个碱基编码一个氨基酸的规律",
+            "question": "洛氏硬度HRA的压头类型，总负荷是什么，测量范围是多少?", #numreic question
+            "reasoning": "找到所给文档表1-1“常用洛氏硬度标尺的试验条件与应用范围”的第一行可以看见，洛氏硬度HRA的压头是120°金刚石锥形压头，负荷是588.4N，测量范围是60-85HRA，根据表格的内容可以得出这个结论。",
+            "answer": "洛氏硬度HRA的压头类型是120°金刚石锥形压头，总负荷是588.4N，测量范围是60-85HRA。",
         },
         {
-            "question": " 短期记忆和长期记忆有什么区别？", 
-            "reasoning": "图2-7展示了不同形式记忆的关系。短期记忆通常指的是信息的短暂存储，其特征是容易遗忘。而长期记忆则涉及信息的持久保留，需要神经元之间的复杂联系来维持。", 
-            "answer": "短期记忆和长期记忆的区别在于它们的持续时间和神经机制。"
+            "question": " 低碳钢比例极限和弹性极限的区别是什么?", # cross-page question
+            "reasoning": "第一页图片中图1-6展示了低碳钢的拉伸应力‐应变曲线,第二张图片中的文本解释了该曲线的特征中比例极限点A和弹性极限点A'。根据这几页中图1-6和相关文本,可以共同结合得出低碳钢比例极限和弹性极限的区别：OA 段为弹性阶段。这种变形称为弹性变形 ，A 点的应力 σe 称为弹性极限 ，为材料不产生永久变形可承受的最大应力值。OA 线中 OA′段为一斜直线，在OA′段应变与应力始终成比例，所以 A′点的应力 σp 称为比例极限，即应变量与应力成比例所对应的最大应力值。", 
+            "answer": " 弹性极限：材料不产生永久变形的最大应力值；比例极限： 即应变量与应力成比例所对应的最大应力值 。 由于 这两个点很接近 ，工程上一般不作区分 。" ,  # don't forget comma, and other json format
         },
     ]
 }
@@ -43,7 +43,7 @@ def dump_jsonl(req_imgs, data_path ,file_path):
             content = []
             content.append({
                 "type": "text",
-                "text": PROMPT
+                "text": "给定以下几张图片，生成问题"
             })
             for img_name in batch:
                 img_path = os.path.join(data_path, img_name)
@@ -62,7 +62,7 @@ def dump_jsonl(req_imgs, data_path ,file_path):
             messages = [
                 {
                     "role": "system",
-                    "content": "You are an expert in document question-answering dialogue analysis."
+                    "content": PROMPT
                 },
                 {
                     "role": "user",
@@ -89,16 +89,21 @@ def dump_jsonl(req_imgs, data_path ,file_path):
                     # "response_format":{'type': 'json_object'},
                     "max_tokens": 1000
                 }
-            }) + '\n')
+            }, ensure_ascii=False) + '\n')
 
 def create_batch_jsonl(data_path):
     # 找到index2img_filename.txt,每行提取出来,作为图片文件名的list
+ 
     namefile = os.path.join(data_path, 'index2img_filename.txt')
     if not os.path.exists(namefile):
         print(f"index2img_filename.txt not found in {data_path}")
         return None
     with open(namefile, 'r') as f:
         img_names = f.read().split('\n')
+        
+    # 如果只提取特定的书EEmaterials和EEdesign
+    img_names = [img_name for img_name in img_names if "EEmaterials" in img_name or "EEdesign" in img_name]
+    
     # 每k个作为一组，组成一个请求
     k = conf.QA_IMG_NUM
     req_imgs = []
@@ -175,11 +180,11 @@ def download_output(batch_ids):
         # content.write_to_file("generated_answer.jsonl")
         content.write_to_file(os.path.join(conf.TEST_DIR, f"generated_QA_{batch_id}.jsonl"))
 
-# file_paths = create_batch_jsonl(conf.DATASTORE)
+file_paths = create_batch_jsonl(conf.DATASTORE)
 
 
-# file_ids = upload_batchfile(file_paths)
-# batch_ids = submit_batch_task(file_ids)
+file_ids = upload_batchfile(file_paths)
+batch_ids = submit_batch_task(file_ids)
 
 
 

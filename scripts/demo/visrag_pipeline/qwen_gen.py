@@ -30,13 +30,22 @@ def qwen_answer_question(images_path_topk, query, model, processor):
     combined_img_path_tmp = all_path_to_one_create(images_path_topk)
     
     # prompt限制一下输入长度，精简
-    RESTRICT = "回答控制在100字以内"
-    content = [
+    RESTRICT = "你是一个正在开卷考试的考生，根据所给图片内容有理有据的回答问题(不能直接说图1-1等，用文字回答出来),不要过多分析过程只要答案,回答不超过100字"
+    if conf.RAG_EN:
+        content = [
                 {"type": "image", "image": combined_img_path_tmp,},
-                {"type": "text" , "text" : query + RESTRICT},
+                {"type": "text" , "text" : query},
+            ]
+    else:
+        content = [
+                {"type": "text" , "text" : query},
             ]
     
     messages = [
+        {
+            "role": "system",
+            "content": RESTRICT,
+        },
         {
             "role": "user",
             "content": content,
@@ -47,7 +56,12 @@ def qwen_answer_question(images_path_topk, query, model, processor):
     text = processor.apply_chat_template(
         messages, tokenize=False, add_generation_prompt=True
     )
-    image_inputs, video_inputs = process_vision_info(messages)
+    
+    if conf.RAG_EN:
+        image_inputs, video_inputs = process_vision_info(messages)
+    else:
+        image_inputs, video_inputs = (None, None)
+        
     inputs = processor(
         text=[text],
         images=image_inputs,
