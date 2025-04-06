@@ -22,6 +22,7 @@ from memlog import log_memory
 from retrieve import *
 import json
 from tqdm import tqdm 
+import argparse
 
 
 model_path = 'openbmb/VisRAG-Ret'
@@ -60,8 +61,7 @@ def export_result(answer_path, query, images_path_topk, answer, reference_answer
 def main():
     
     # query = "弃耕农田上面会不会发生群落演替，演替类型是什么，请说一下这个例子中演替的几个阶段"
-    
-    print(f"Using{conf.MODEL_TYPE} model, RAG settings: {conf.RAG_EN}, test field: {conf.TEST_FIELD}")
+
     
     
     qa_pairs = load_qa_pairs(os.path.join(conf.TEST_DIR, f'test_QA_{conf.TEST_FIELD}.jsonl'))
@@ -123,4 +123,23 @@ def main():
     print(f"Answer saved at {answer_path}/{timestamp}/result.json")
 
 if __name__ == "__main__":
+    # 定义命令行参数
+    parser = argparse.ArgumentParser(description="Modify conf.py settings dynamically.")
+    parser.add_argument("--test_field", type=str, choices=["BI", "EE"], help="Set TEST_FIELD value.")
+    parser.add_argument("--model_type", type=str, choices=["Qwen-VL-2B", "Qwen-VL-7B", "MiniCPM"], help="Set MODEL_TYPE value.")
+    parser.add_argument("--rag_en", type=bool, default=None, help="Enable or disable RAG_EN (True/False).")
+
+    args = parser.parse_args()
+
+    # 动态修改 conf.py 中的值
+    if args.test_field:
+        conf.TEST_FIELD = args.test_field
+    if args.model_type:
+        conf.MODEL_TYPE = args.model_type
+    if args.rag_en is not None:
+        conf.RAG_EN = args.rag_en
+
+    # 打印修改后的配置（可选）
+    print(f"Using{conf.MODEL_TYPE} model, RAG settings: {conf.RAG_EN}, test field: {conf.TEST_FIELD}")
+    
     main()
