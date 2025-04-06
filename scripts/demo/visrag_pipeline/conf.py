@@ -10,7 +10,7 @@ BASE_DIR = "/home/bingxing2/home/scx7655/workspace/VisRAG"
 QA_BATCH_SIZE = 256
 QA_IMG_NUM = 3
 
-# TEST_FIELD="bio"
+# TEST_FIELD="BI"
 TEST_FIELD="EE"
 
 MODEL_TYPE= "Qwen-VL-2B"
