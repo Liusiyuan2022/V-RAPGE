@@ -60,24 +60,14 @@ def add_pdfs(pdf_dir):
         
     print(f"Knowledge base built at {knowledge_base_path}")
 
+
+
+
 model_path = 'openbmb/VisRAG-Ret'
 
-
-# while(True):
-#     knowledge_base_path = input("Please enter the knowledge base path in which we build the index: ")
-#     if os.path.isabs(knowledge_base_path):
-#         break
-#     else:
-#         print("Invalid knowledge base path, please try again.")
 knowledge_base_path = conf.DATASTORE
 os.makedirs(knowledge_base_path, exist_ok=True)
 
-# while(True):
-#     pdf_dir = input("Enter the directory that contains the pdf files: ")
-#     if os.path.isdir(pdf_dir):
-#         break
-#     else:
-#         print("Invalid pdf directory, please try again.") 
 pdf_dir = conf.PDF_DIR
 
 print("emb model load begin...")

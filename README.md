@@ -248,6 +248,6 @@ make parse
 **需要指定RAG_EN变量**，以指定是否使用RAG
 例如
 ```bash
-make answer TEST_FIELD=EE MODEL=Qwen-VL-2B RAG_EN=True
+make answer TEST_FIELD=EE MODEL=Qwen-VL-3B RAG_EN=True
 ```
 

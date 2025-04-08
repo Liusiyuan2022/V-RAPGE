@@ -25,10 +25,6 @@ from tqdm import tqdm
 import argparse
 
 
-model_path = 'openbmb/VisRAG-Ret'
-# gen_model_path = 'openbmb/MiniCPM-V-2_6'
-# gen_model_path = 'Qwen/Qwen2-VL-2B-Instruct'
-
 def load_qa_pairs(jsonl_file_path):
     qa_pairs = []
     with open(jsonl_file_path, 'r', encoding='utf-8') as f:
@@ -51,18 +47,8 @@ def export_result(answer_path, query, images_path_topk, answer, reference_answer
             'answer': answer,
             'reference': reference_answer
         },ensure_ascii=False) + '\n')
-    # save images
-    # images_topk = [Image.open(i) for i in images_path_topk]
-    # for idx, image in enumerate(images_topk):
-    #     image.save(os.path.join(answer_path, os.path.basename(images_path_topk[idx])))
-    
-    
     
 def main():
-    
-    # query = "弃耕农田上面会不会发生群落演替，演替类型是什么，请说一下这个例子中演替的几个阶段"
-
-    
     
     qa_pairs = load_qa_pairs(os.path.join(conf.TEST_DIR, f'test_QA_{conf.TEST_FIELD}.jsonl'))
     
@@ -76,21 +62,30 @@ def main():
     
     
     
-    if conf.MODEL_TYPE == "Qwen-VL-2B":
+    if conf.MODEL_TYPE == "Qwen-VL-3B":
         # Qwen2-VL-2B-Instruct
+        model_path = "datacenter/models/Qwen/Qwen2.5-VL-3B-Instruct"
         model_gen = Qwen2VLForConditionalGeneration.from_pretrained(
-            "Qwen/Qwen2-VL-2B-Instruct", torch_dtype=torch.bfloat16, device_map="auto",cache_dir=conf.CACHE_DIR, attn_implementation="flash_attention_2"
+            model_path, torch_dtype=torch.bfloat16, device_map="auto",cache_dir=conf.CACHE_DIR, attn_implementation="flash_attention_2"
         )
         # default processer
-        processor = AutoProcessor.from_pretrained("Qwen/Qwen2-VL-2B-Instruct", cache_dir=conf.CACHE_DIR)
+        processor = AutoProcessor.from_pretrained(model_path, cache_dir=conf.CACHE_DIR)
         
     elif conf.MODEL_TYPE == "Qwen-VL-7B":
         #Qwen2.5-VL-7B-Instruct
+        model_path = "datacenter/models/Qwen/Qwen2.5-VL-7B-Instruct"
         model_gen =  Qwen2_5_VLForConditionalGeneration.from_pretrained(
-            "Qwen/Qwen2.5-VL-7B-Instruct",torch_dtype=torch.bfloat16, device_map="auto",
+            model_path,torch_dtype=torch.bfloat16, device_map="auto",
             cache_dir=conf.CACHE_DIR, attn_implementation="flash_attention_2",
         )
-        processor = AutoProcessor.from_pretrained("Qwen/Qwen2.5-VL-7B-Instruct", cache_dir=conf.CACHE_DIR)
+        processor = AutoProcessor.from_pretrained(model_path, cache_dir=conf.CACHE_DIR)
+    elif conf.MODEL_TYPE == "Qwen-VL-32B":
+        model_path = "datacenter/models/Qwen/Qwen2.5-VL-32B-Instruct"
+        model_gen = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+            model_path, torch_dtype=torch.bfloat16, device_map="auto",
+            cache_dir=conf.CACHE_DIR, attn_implementation="flash_attention_2",
+        )
+        processor = AutoProcessor.from_pretrained(model_path, cache_dir=conf.CACHE_DIR)
     else:
         raise ValueError(f"Unsupported model type: {conf.MODEL_TYPE}")
         
@@ -115,7 +110,7 @@ def main():
         # print(f"Image size: {img_0.size}")
 
         # 生成答案
-        if conf.MODEL_TYPE == "Qwen-VL-2B":
+        if conf.MODEL_TYPE == "Qwen-VL-3B":
             answer = qwen_answer_question(images_path_topk, query, model_gen, processor)
         # print(answer)
         export_result(answer_path, query, images_path_topk, answer, reference_answer)
@@ -126,7 +121,7 @@ if __name__ == "__main__":
     # 定义命令行参数
     parser = argparse.ArgumentParser(description="Modify conf.py settings dynamically.")
     parser.add_argument("--test_field", type=str, choices=["BI", "EE"], help="Set TEST_FIELD value.")
-    parser.add_argument("--model_type", type=str, choices=["Qwen-VL-2B", "Qwen-VL-7B", "MiniCPM"], help="Set MODEL_TYPE value.")
+    parser.add_argument("--model_type", type=str, choices=["Qwen-VL-3B", "Qwen-VL-7B", "MiniCPM"], help="Set MODEL_TYPE value.")
     parser.add_argument("--rag_en", type=bool, default=None, help="Enable or disable RAG_EN (True/False).")
 
     args = parser.parse_args()

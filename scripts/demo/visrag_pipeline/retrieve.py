@@ -63,16 +63,16 @@ def retrieve(query, model, tokenizer, device):
 
 
 def load_ret_models():
-    model_path = 'openbmb/VisRAG-Ret'
-    device = f'cuda:0' # use the first GPU for retrieval
+    model_path = '/datacenter/models/openbmb/VisRAG-Ret'  # 使用绝对路径指向本地模型
+    # device = f'cuda:1' # use the 1th GPU for retrieval
 
     print(f"VisRAG-Ret load begin...")
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True, cache_dir=conf.CACHE_DIR)
     
-    model = AutoModel.from_pretrained(model_path, trust_remote_code=True,
+    model = AutoModel.from_pretrained(model_path, trust_remote_code=True, device_map="auto",
         attn_implementation='sdpa', torch_dtype=torch.bfloat16, cache_dir=conf.CACHE_DIR)
     
-    model.to(device)
+    # model.to(device)
     model.eval()
     print(f"VisRAG-Ret load success!")
     

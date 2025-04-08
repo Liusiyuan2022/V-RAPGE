@@ -23,7 +23,7 @@ done
 
 # 设置默认值（如果未传入参数）
 TEST_FIELD=${TEST_FIELD:-EE}
-MODEL_TYPE=${MODEL_TYPE:-Qwen-VL-2B}
+MODEL_TYPE=${MODEL_TYPE:-Qwen-VL-3B}
 RAG_EN=${RAG_EN:-True}
 
 echo "启动VisRAG演示，使用 $NUM_GPUS 个GPU..."

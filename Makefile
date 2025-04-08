@@ -4,8 +4,8 @@
 
 # BI EE
 TEST_FIELD = EE 
-# Qwen-VL-2B Qwen-VL-7B MiniCPM
-MODEL = Qwen-VL-2B
+# Qwen-VL-3B Qwen-VL-7B MiniCPM
+MODEL = Qwen-VL-3B
 # True False
 RAG_EN = True
 # sbatch cmd
