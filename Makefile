@@ -11,13 +11,13 @@ RAG_EN = True
 # sbatch cmd
 
 answer:
-	sbatch  --gpus=$(GPU_NUM) ./run_cmd/run_demo.sh --model_type $(MODEL) --rag_en $(RAG_EN) --test_field $(TEST_FIELD)
+	./run_cmd/run_demo.sh --model_type $(MODEL) --rag_en $(RAG_EN) --test_field $(TEST_FIELD)
 
 test:
-	sbatch  --gpus=$(GPU_NUM) ./run_cmd/test.sh
+	./run_cmd/test.sh
 
 index:
-	sbatch  --gpus=1 ./run_cmd/build_index.sh
+	./run_cmd/build_index.sh
 
 # local cmd
 
