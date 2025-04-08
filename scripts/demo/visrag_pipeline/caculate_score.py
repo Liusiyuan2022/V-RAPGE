@@ -3,6 +3,7 @@ import os
 import conf
 import re
 import numpy
+import argparse
 ANSWER_ID = "20250401124728"
 
 def parse_jsonl(input_dir):
@@ -40,4 +41,12 @@ def parse_jsonl(input_dir):
     avg_score = numpy.mean(scores)
     print(f"The average rating is : {avg_score}")
 
-parse_jsonl(os.path.join(conf.RESULT_DIR, ANSWER_ID, 'eval.jsonl'))
+if __name__ == "__main__":
+    # Parse the JSONL file and extract the text content
+    
+    parser = argparse.ArgumentParser(description="Parse JSONL file and extract text content.")
+    parser.add_argument("--answer_id", type=str, help="The ID of the answer to parse.")
+    args = parser.parse_args()
+    ANSWER_ID = args.answer_id if args.answer_id else ANSWER_ID
+    # 解析 JSONL 文件
+    parse_jsonl(os.path.join(conf.RESULT_DIR, ANSWER_ID, 'eval.jsonl'))

@@ -22,16 +22,30 @@ index:
 # local cmd
 
 PYTHON = /home/liusiyuan/.conda/envs/VisRAG/bin/python
-BUILD_SCRIPT = scripts/demo/visrag_pipeline/build_QA.py
+QA_SCRIPT = scripts/demo/visrag_pipeline/build_QA.py
 PARSE_SCRIPT = scripts/demo/visrag_pipeline/parse_QA.py
+EVAL_SCRIPT = scripts/demo/visrag_pipeline/build_eval.py
+SCORE_SCRIPT = scripts/demo/visrag_pipeline/caculate_score.py
 
 upload_QAgen:
-	$(PYTHON) $(BUILD_SCRIPT) --action upload --test_field $(TEST_FIELD)
+	$(PYTHON) $(QA_SCRIPT) --action upload --test_field $(TEST_FIELD)
 
 download_QAgen:
-	$(PYTHON) $(BUILD_SCRIPT) --action download --test_field $(TEST_FIELD)
+	$(PYTHON) $(QA_SCRIPT) --action download --test_field $(TEST_FIELD)
 parse:
 	$(PYTHON) $(PARSE_SCRIPT)
+
+
+ANSWER_ID = Qwen-VL-3B_RAG_BI_20250408072103
+
+upload_eval:
+	$(PYTHON) $(EVAL_SCRIPT) --action upload --answer_id $(ANSWER_ID)
+
+download_eval:
+	$(PYTHON) $(EVAL_SCRIPT) --action download --answer_id $(ANSWER_ID)
+
+score:
+	$(PYTHON) $(SCORE_SCRIPT) --answer_id $(ANSWER_ID)
 
 clean:
 	rm slurm-*.out

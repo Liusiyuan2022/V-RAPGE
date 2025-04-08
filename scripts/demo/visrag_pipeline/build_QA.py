@@ -7,9 +7,9 @@ from PIL import Image
 from tqdm import tqdm
 import time
 # 老师的
-# ZHIPU_API_KEY="46ed99244d8f49b5b2eb18ed9292d4df.mgThjPTMvrV7XQbh"
+ZHIPU_API_KEY="46ed99244d8f49b5b2eb18ed9292d4df.mgThjPTMvrV7XQbh"
 # 我的
-ZHIPU_API_KEY="28eb0cace1314b2bbc1824aa98b823a0.eOwjqu86fz9DtMRJ"
+# ZHIPU_API_KEY="28eb0cace1314b2bbc1824aa98b823a0.eOwjqu86fz9DtMRJ"
 
 PROMPT = """Based on the document images provided, complete the following task:
 [Task]: Generate question-reasoning-answer pairs from different perspectives.
@@ -186,7 +186,6 @@ def check_jobs(batch_ids):
 
 # 目前实际上只支持单文件
 def download_output(output_file_ids):
-    from zhipuai import ZhipuAI
     client = ZhipuAI(api_key=ZHIPU_API_KEY)
     for output_file_id in output_file_ids:
         # client.files.content返回 _legacy_response.HttpxBinaryResponseContent实例

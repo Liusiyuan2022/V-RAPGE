@@ -251,3 +251,24 @@ make parse
 make answer TEST_FIELD=EE MODEL=Qwen-VL-3B RAG_EN=True
 ```
 
+推理的结果将被存在answer_log里面，会有一个子文件夹记录有关信息，例如answer_log/Qwen-VL-3B_RAG_BI_20250408072103
+推理结果是answer.jsonl文件
+
+评测采用智谱平台的模型，同样是创建batch去处理
+包括三个命令
+根据answer.jsonl文件生成评测的batch请求，为batch.jsonl文件
+同时上传到智谱AI的API，留下对应的batch_id.json文件
+```bash
+make upload_eval ANSWER_ID=<answer_dir_name>
+```
+
+下载评测结果，评测结果会存在对应的文件夹下面，例如answer_log/Qwen-VL-3B_RAG_BI_20250408072103/eval.jsonl
+如果这个batch还没有执行玩，会有相关信息，需要在等待一段时间之后再执行
+```bash
+make download_eval ANSWER_ID=<answer_dir_name>
+```
+
+通过读取和解析评测结果，得到最终的均分分数
+```bash
+make score ANSWER_ID=<answer_dir_name>
+```

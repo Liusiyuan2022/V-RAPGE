@@ -5,9 +5,9 @@ import conf
 import base64
 import time
 # 老师的
-# ZHIPU_API_KEY="46ed99244d8f49b5b2eb18ed9292d4df.mgThjPTMvrV7XQbh"
+ZHIPU_API_KEY="46ed99244d8f49b5b2eb18ed9292d4df.mgThjPTMvrV7XQbh"
 # 我的
-ZHIPU_API_KEY="28eb0cace1314b2bbc1824aa98b823a0.eOwjqu86fz9DtMRJ"
+# ZHIPU_API_KEY="28eb0cace1314b2bbc1824aa98b823a0.eOwjqu86fz9DtMRJ"
 
 
 ANSWER_ID = "Qwen-VL-3B_RAG_EE_20250402152431"
@@ -111,11 +111,64 @@ def submit_batch_task(file_id):
     with open(os.path.join(conf.RESULT_DIR, ANSWER_ID, 'batch_id.json'), 'w') as f:
         json.dump(batch_id, f)
     print(f"Submit Success! batch_id were saved to {os.path.join(conf.RESULT_DIR, ANSWER_ID, 'batch_id.json')}")
+    
+def check_jobs(batch_id):
+    client = ZhipuAI(api_key=ZHIPU_API_KEY)
+    # 检查任务状态
+    batch_job = client.batches.retrieve(batch_id)
+    output_file_id = batch_job.output_file_id
+    if batch_job.status != "completed":
+        print(f"Batch job {batch_id} is still in progress. Status: {batch_job.status}")
+        print(f"Download canceled, please check the status later.")
+        return None
+    return output_file_id
+
+def download_output(output_file_id):
+    client = ZhipuAI(api_key=ZHIPU_API_KEY)
+    # 下载输出文件
+    print(f"downloading output file {output_file_id}")
+    content = client.files.content(output_file_id)
+    # 使用write_to_file方法把返回结果写入文件
+    # content.write_to_file("generated_answer.jsonl")
+    content.write_to_file(os.path.join(conf.RESULT_DIR, ANSWER_ID, f"eval.jsonl"))
+    print(f"Download success! Content was saved to {os.path.join(conf.RESULT_DIR, ANSWER_ID, f'eval.jsonl')}")
+
+def upload_task():
         
+    file_path = create_batch_jsonl(os.path.join(conf.RESULT_DIR, ANSWER_ID))
 
-file_path = create_batch_jsonl(os.path.join(conf.RESULT_DIR, ANSWER_ID))
+    file_id = upload_batchfile(file_path)
+    submit_batch_task(file_id)
+
+def download_result():
+    batch_id_path = os.path.join(conf.RESULT_DIR, ANSWER_ID, 'batch_id.json')
+    if not os.path.exists(batch_id_path):
+        print(f"Batch ID file not found: {batch_id_path}")
+        return
+    
+    batch_id = json.load(open(batch_id_path, 'r'))
+    
+    output_file_id = check_jobs(batch_id)
+    
+    if output_file_id is None:
+        print("No completed jobs found.")
+        return
+
+    download_output(output_file_id)
 
 
-file_id = upload_batchfile(file_path)
-batch_id = submit_batch_task(file_id)
 
+if __name__ == "__main__":
+    import argparse
+
+    # 定义命令行参数
+    parser = argparse.ArgumentParser(description="Upload or download tasks.")
+    parser.add_argument("--action", type=str, required=True, choices=["upload", "download"],help="Action to perform: 'upload' to upload tasks, 'download' to download results.")
+    parser.add_argument("--answer_id", type=str, help="Answer ID for the task.")
+    args = parser.parse_args()
+    ANSWER_ID = args.answer_id if args.answer_id else ANSWER_ID
+    # 根据参数调用对应的函数
+    if args.action == "upload":
+        upload_task()
+    elif args.action == "download":
+        download_result()
