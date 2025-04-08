@@ -13,7 +13,7 @@ ZHIPU_API_KEY="46ed99244d8f49b5b2eb18ed9292d4df.mgThjPTMvrV7XQbh"
 ANSWER_ID = "Qwen-VL-3B_RAG_EE_20250402152431"
 
 PROMPT = """You are an impartial judge. 
-[Task]: Evaluate the quality of the AI assistant's response to the user's question based on helpfulness, relevance, accuracy, and detail. 
+[Task]: Evaluate the quality of the AI assistant's response to the user's question based on helpfulness, relevance, accuracy, and detail with the reference answer and your knowledge.
 [Instructions]: 
 1. In the given format, "query“ means the user question, "answer" means the AI assistant's response, and "reference" means the reference answer.
 2. Begin your evaluation by providing a short explanation. Be as objective as possible.

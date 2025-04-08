@@ -66,7 +66,7 @@ def main():
         # Qwen2-VL-2B-Instruct
         model_path = "/datacenter/models/Qwen/Qwen2.5-VL-3B-Instruct"
         model_gen = Qwen2_5_VLForConditionalGeneration.from_pretrained(
-            model_path, torch_dtype=torch.bfloat16, device_map="auto",cache_dir=conf.CACHE_DIR, attn_implementation="flash_attention_2"
+            model_path, torch_dtype=torch.bfloat16, device_map=f"cuda:{conf.GPU_ID}",cache_dir=conf.CACHE_DIR, attn_implementation="flash_attention_2"
         )
         # default processer
         processor = AutoProcessor.from_pretrained(model_path, cache_dir=conf.CACHE_DIR)
@@ -75,14 +75,14 @@ def main():
         #Qwen2.5-VL-7B-Instruct
         model_path = "/datacenter/models/Qwen/Qwen2.5-VL-7B-Instruct"
         model_gen =  Qwen2_5_VLForConditionalGeneration.from_pretrained(
-            model_path,torch_dtype=torch.bfloat16, device_map="auto",
+            model_path,torch_dtype=torch.bfloat16, device_map=f"cuda:{conf.GPU_ID}",
             cache_dir=conf.CACHE_DIR, attn_implementation="flash_attention_2",
         )
         processor = AutoProcessor.from_pretrained(model_path, cache_dir=conf.CACHE_DIR)
     elif conf.MODEL_TYPE == "Qwen-VL-32B":
         model_path = "/datacenter/models/Qwen/Qwen2.5-VL-32B-Instruct"
         model_gen = Qwen2_5_VLForConditionalGeneration.from_pretrained(
-            model_path, torch_dtype=torch.bfloat16, device_map="auto",
+            model_path, torch_dtype=torch.bfloat16, device_map=f"cuda:{conf.GPU_ID}",
             cache_dir=conf.CACHE_DIR, attn_implementation="flash_attention_2",
         )
         processor = AutoProcessor.from_pretrained(model_path, cache_dir=conf.CACHE_DIR)
@@ -126,7 +126,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Modify conf.py settings dynamically.")
     parser.add_argument("--test_field", type=str, choices=["BI", "EE"], help="Set TEST_FIELD value.")
     parser.add_argument("--model_type", type=str, choices=["Qwen-VL-3B", "Qwen-VL-7B", "MiniCPM"], help="Set MODEL_TYPE value.")
-    parser.add_argument("--rag_en", type=bool, default=None, help="Enable or disable RAG_EN (True/False).")
+    # 当使用 type=bool 时，argparse 会尝试将字符串转换为布尔值，但在 Python 中，除了空字符串，几乎所有字符串转换为布尔值都是 True，包括字符串 "False"！
+    # 因此这里使用lambda 函数来处理字符串转换为布尔值
+    parser.add_argument("--rag_en", type=lambda x: x.lower() == "true", default=True, help="Set RAG_EN value.")
 
     args = parser.parse_args()
 
@@ -135,9 +137,8 @@ if __name__ == "__main__":
         conf.TEST_FIELD = args.test_field
     if args.model_type:
         conf.MODEL_TYPE = args.model_type
-    if args.rag_en is not None:
-        conf.RAG_EN = args.rag_en
 
+    conf.RAG_EN = args.rag_en
     # 打印修改后的配置（可选）
     print(f"Using{conf.MODEL_TYPE} model, RAG settings: {conf.RAG_EN}, test field: {conf.TEST_FIELD}")
     

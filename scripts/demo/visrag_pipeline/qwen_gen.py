@@ -29,19 +29,26 @@ def qwen_answer_question(images_path_topk, query, model, processor):
     combined_img_path_tmp = all_path_to_one_create(images_path_topk)
     
     # prompt限制一下输入长度，精简
-    RESTRICT = """
-    [Task]You are a helpful assistant. Please answer the question based on the provided image in which helps you find answers. If you cannot find the answer, please say 'I don't know'.
-    [Constrain] less than 200 Chinese characters.
-    [Response Language] Chinese
-    [Response Format] here's an example:
-    HRA的压头类型是120°金刚石锥形压头，总负荷是588.4N，测量范围是60-85HRA。
-    """
     if conf.RAG_EN:
+        RESTRICT = """
+                [Task]You are a helpful assistant. Please answer the question based on the provided image in which helps you find answers. If you cannot answer, please say 'I don't know'.
+                [Constrain] less than 200 Chinese characters.
+                [Response Language] Chinese
+                [Response Format] here's an example:
+                HRA的压头类型是120°金刚石锥形压头，总负荷是588.4N，测量范围是60-85HRA。
+                """
         content = [
                 {"type": "image", "image": combined_img_path_tmp,},
                 {"type": "text" , "text" : query},
             ]
     else:
+        RESTRICT = """
+                [Task]You are a helpful assistant. Please answer the question based on your knowledge. If you cannot find the answer, please say 'I don't know'.
+                [Constrain] less than 200 Chinese characters.
+                [Response Language] Chinese
+                [Response Format] here's an example:
+                HRA的压头类型是120°金刚石锥形压头，总负荷是588.4N，测量范围是60-85HRA。
+                """
         content = [
                 {"type": "text" , "text" : query},
             ]
@@ -75,15 +82,18 @@ def qwen_answer_question(images_path_topk, query, model, processor):
         return_tensors="pt",
     )
     
-    inputs = inputs.to(model.device)
+    device = f"cuda:{conf.GPU_ID}"
     
     model.eval()
+    
+    # 对于分片模型,让模型处理输入设备分配
+    model_inputs = inputs.to(device)
 
     # 使用torch.no_grad()以节省内存
     # log_memory("before Qwen generate")
     with torch.no_grad():
         # Inference: Generation of the output
-        generated_ids = model.generate(**inputs, max_new_tokens=conf.MAX_TOKENS)
+        generated_ids = model.generate(**model_inputs, max_new_tokens=conf.MAX_TOKENS)
         # log_memory("after Qwen generate call")
         generated_ids_trimmed = [
             out_ids[len(in_ids):] for in_ids, out_ids in zip(inputs.input_ids, generated_ids)

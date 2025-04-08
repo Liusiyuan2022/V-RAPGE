@@ -114,8 +114,10 @@ Qwen-vl2B The average rating is : 7.110778443113772
 接下来的任务
 
 打通eval部分的batch
+打通了，可以使用老师的api了
 
 跑通Qwen7B和MiniCPM
+不跑MiniCPM了，直接用Qwen2.5的三个size模型就可以
 
 找一个更加私域的数据集：比如复旦大学教务处的信息，因为这是内部信息，在Qwen2B上回答未知，是很好的材料。
 

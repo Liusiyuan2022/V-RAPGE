@@ -1,4 +1,10 @@
 #!/bin/bash
+
+# 设置默认值（如果未传入参数）
+TEST_FIELD=${TEST_FIELD:-EE}
+MODEL_TYPE=${MODEL_TYPE:-Qwen-VL-3B}
+RAG_EN=${RAG_EN:-True}
+
 # 解析外部传入的参数
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -21,12 +27,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# 设置默认值（如果未传入参数）
-TEST_FIELD=${TEST_FIELD:-EE}
-MODEL_TYPE=${MODEL_TYPE:-Qwen-VL-3B}
-RAG_EN=${RAG_EN:-True}
-
-echo "启动VisRAG演示，使用 1 个GPU..."
+echo "启动VisRAG演示"
 
 /home/liusiyuan/.conda/envs/VisRAG/bin/python \
     /datacenter/liusiyuan/VisRAG_test/scripts/demo/visrag_pipeline/answer.py \
