@@ -62,22 +62,25 @@ def add_pdfs(pdf_dir):
 
 
 
+if __name__ == "__main__":
+    # 加载模型
+    model_path = '/datacenter/models/openbmb/VisRAG-Ret'
+    device = f'cuda:{conf.GPU_ID}'  # use the 1th GPU for retrieval
 
-model_path = 'openbmb/VisRAG-Ret'
+    knowledge_base_path = conf.DATASTORE
+    os.makedirs(knowledge_base_path, exist_ok=True)
 
-knowledge_base_path = conf.DATASTORE
-os.makedirs(knowledge_base_path, exist_ok=True)
+    pdf_dir = conf.PDF_DIR
 
-pdf_dir = conf.PDF_DIR
+    print("emb model load begin...")
+    tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True, device_map="auto", cache_dir=conf.CACHE_DIR)
+    model = AutoModel.from_pretrained(model_path, trust_remote_code=True,
+        attn_implementation='sdpa', torch_dtype=torch.bfloat16, cache_dir=conf.CACHE_DIR,)
+    model.to(device)
+    model.eval()
+    print("emb model load success!")
 
-print("emb model load begin...")
-tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True, device_map="auto", cache_dir=conf.CACHE_DIR)
-model = AutoModel.from_pretrained(model_path, trust_remote_code=True,
-    attn_implementation='sdpa',device_map="auto", torch_dtype=torch.bfloat16, cache_dir=conf.CACHE_DIR,)
-model.eval()
-print("emb model load success!")
-
-add_pdfs(pdf_dir)
+    add_pdfs(pdf_dir)
 
 
 

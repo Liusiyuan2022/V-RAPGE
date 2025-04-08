@@ -1,3 +1,6 @@
+# choose the GPU ID,  0-7, use the free GPU
+GPU_ID = 1
+
 DATASTORE = "scripts/demo/datastore"
 PDF_DIR ="scripts/demo/pdf_materials"
 RESULT_DIR="scripts/demo/answer_log"
