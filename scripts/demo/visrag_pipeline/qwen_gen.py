@@ -19,7 +19,6 @@ def qwen_answer_question(images_path_topk, query, model, processor):
     #     device_map="auto",
     # )
     
-    #emm flash_attention_2 will cause torch reinstall. 
     
 
     # The default range for the number of visual tokens per image in the model is 4-16384. You can set min_pixels and max_pixels according to your needs, such as a token count range of 256-1280, to balance speed and memory usage.
@@ -30,7 +29,13 @@ def qwen_answer_question(images_path_topk, query, model, processor):
     combined_img_path_tmp = all_path_to_one_create(images_path_topk)
     
     # prompt限制一下输入长度，精简
-    RESTRICT = "你是一个正在开卷考试的考生，根据所给图片内容有理有据的回答问题(不能直接说图1-1等，用文字回答出来),不要过多分析过程只要答案,回答不超过100字"
+    RESTRICT = """
+    [Task]You are a helpful assistant. Please answer the question based on the provided image in which You can find answers. If you cannot find the answer, please say 'I don't know'.
+    [Constrain] less than 200 Chinese characters.
+    [Response Language] Chinese
+    [Response Format] here's an example:
+    HRA的压头类型是120°金刚石锥形压头，总负荷是588.4N，测量范围是60-85HRA。
+    """
     if conf.RAG_EN:
         content = [
                 {"type": "image", "image": combined_img_path_tmp,},

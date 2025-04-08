@@ -7,6 +7,8 @@ jmespath
 Levenshtein
 numpy==1.26.4
 openai
+qwen_vl_utils
+zhipuai
 Pillow==10.1.0
 protobuf==4.25.0
 PyMuPDF

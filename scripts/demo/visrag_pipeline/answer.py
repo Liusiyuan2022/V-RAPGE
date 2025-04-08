@@ -79,8 +79,7 @@ def main():
     if conf.MODEL_TYPE == "Qwen-VL-2B":
         # Qwen2-VL-2B-Instruct
         model_gen = Qwen2VLForConditionalGeneration.from_pretrained(
-            "Qwen/Qwen2-VL-2B-Instruct", torch_dtype=torch.bfloat16, device_map="auto",cache_dir=conf.CACHE_DIR,
-            attn_implementation="flash_attention_2",
+            "Qwen/Qwen2-VL-2B-Instruct", torch_dtype=torch.bfloat16, device_map="auto",cache_dir=conf.CACHE_DIR, attn_implementation="flash_attention_2"
         )
         # default processer
         processor = AutoProcessor.from_pretrained("Qwen/Qwen2-VL-2B-Instruct", cache_dir=conf.CACHE_DIR)
@@ -88,9 +87,10 @@ def main():
     elif conf.MODEL_TYPE == "Qwen-VL-7B":
         #Qwen2.5-VL-7B-Instruct
         model_gen =  Qwen2_5_VLForConditionalGeneration.from_pretrained(
-            os.path.join(conf.CACHE_DIR, "models--Qwen--Qwen2.5-VL-7B-Instruct"),torch_dtype=torch.bfloat16, device_map="auto",attn_implementation="flash_attention_2",
+            "Qwen/Qwen2.5-VL-7B-Instruct",torch_dtype=torch.bfloat16, device_map="auto",
+            cache_dir=conf.CACHE_DIR, attn_implementation="flash_attention_2",
         )
-        processor = AutoProcessor.from_pretrained(os.path.join(conf.CACHE_DIR, "models--Qwen--Qwen2.5-VL-7B-Instruct"))
+        processor = AutoProcessor.from_pretrained("Qwen/Qwen2.5-VL-7B-Instruct", cache_dir=conf.CACHE_DIR)
     else:
         raise ValueError(f"Unsupported model type: {conf.MODEL_TYPE}")
         

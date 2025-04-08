@@ -3,6 +3,6 @@
 
 echo "开始构建图像index，由于RET的第三方模型实现，只能使用单个GPU..."
 
-/home/bingxing2/home/scx7655/.conda/envs/VisRAG/bin/python /home/bingxing2/home/scx7655/workspace/VisRAG/scripts/demo/visrag_pipeline/build_index.py
+/home/liusiyuan/.conda/envs/VisRAG/bin/python /datacenter/liusiyuan/VisRAG_test/scripts/demo/visrag_pipeline/build_index.py
 
 echo "图像index构建完成"

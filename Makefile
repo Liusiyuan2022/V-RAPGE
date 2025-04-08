@@ -1,6 +1,6 @@
 
-.PHONY: clean answer test index
-GPU_NUM=4
+.PHONY: clean answer test index upload_QAgen download_QAgen parse
+
 
 # BI EE
 TEST_FIELD = EE 
@@ -21,7 +21,7 @@ index:
 
 # local cmd
 
-PYTHON = /home/bingxing2/home/scx7655/.conda/envs/VisRAG/bin/python
+PYTHON = /home/liusiyuan/.conda/envs/VisRAG/bin/python
 BUILD_SCRIPT = scripts/demo/visrag_pipeline/build_QA.py
 PARSE_SCRIPT = scripts/demo/visrag_pipeline/parse_QA.py
 

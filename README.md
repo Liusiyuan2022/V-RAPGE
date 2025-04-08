@@ -202,3 +202,52 @@ For `VisRAG-Gen`, you can explore the `VisRAG Pipeline` on Google Colab which in
    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=openbmb/VisRAG&type=Date" />
  </picture>
 </a>
+
+
+# 如何使用
+Makefile中有一些命令可以直接使用，或者直接使用python脚本
+
+测试cuda环境
+```bash
+make test
+```
+构建知识库：
+将需要的pdf文档放在pdf_materials文件夹中，运行以下命令
+```bash
+make build_index
+```
+
+就会在datastore位置生成图片以及索引信息
+
+
+构建问题库：
+**需要指定TEST_FIELD 变量**，以按照知识领域构建多个问题库
+使用智谱AI的batch命令
+运行以下命令
+```bash
+make upload_QAgen
+```
+以构建生成问题的batch请求到智谱AI的API
+如果运行完毕可以下载输出文件
+```bash
+make download_QAgen
+```
+就可以在test_QA文件夹中看到生成的QA对了
+为generated_QA——***.jsonl文件，
+
+这个QA对里面有的格式可能不太好，需要parse筛选一下，
+
+```bash
+make parse
+```
+从而得到最终的QA对，保存形式为test_QA_**.jsonl
+
+推理的时候
+**需要指定TEST_FIELD 变量**，以按照知识领域推理
+**需要指定MODEL 变量**，以指定使用的模型
+**需要指定RAG_EN变量**，以指定是否使用RAG
+例如
+```bash
+make answer TEST_FIELD=EE MODEL=Qwen-VL-2B RAG_EN=True
+```
+
