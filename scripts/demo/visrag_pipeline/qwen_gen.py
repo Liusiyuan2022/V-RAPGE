@@ -30,7 +30,7 @@ def qwen_answer_question(images_path_topk, query, model, processor):
     
     # prompt限制一下输入长度，精简
     RESTRICT = """
-    [Task]You are a helpful assistant. Please answer the question based on the provided image in which You can find answers. If you cannot find the answer, please say 'I don't know'.
+    [Task]You are a helpful assistant. Please answer the question based on the provided image in which helps you find answers. If you cannot find the answer, please say 'I don't know'.
     [Constrain] less than 200 Chinese characters.
     [Response Language] Chinese
     [Response Format] here's an example:
