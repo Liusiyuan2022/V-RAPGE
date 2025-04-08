@@ -112,6 +112,10 @@ def main():
         # 生成答案
         if conf.MODEL_TYPE == "Qwen-VL-3B":
             answer = qwen_answer_question(images_path_topk, query, model_gen, processor)
+        elif conf.MODEL_TYPE == "Qwen-VL-7B":
+            answer = qwen_answer_question(images_path_topk, query, model_gen, processor)
+        elif conf.MODEL_TYPE == "Qwen-VL-32B":
+            answer = qwen_answer_question(images_path_topk, query, model_gen, processor)
         # print(answer)
         export_result(answer_path, query, images_path_topk, answer, reference_answer)
         
