@@ -127,3 +127,6 @@ hf-download model <repo_id>
 操作要在datacenter/models下面进行，防止太多模型副本占用空间
 
 模型的话本地已经有Qwen3B/7B/32B的模型，用这三个应该差不多了
+
+在运行过程中发现2217390 Floating point exception(core dumped)
+结果发现是因为H20的卡需要较高版本的nvidia-cublas-cu112版本较低导致的，不支持精度bf16的运算，解决方法是将cublas的版本升级到11.8以上，或者使用fp32的精度进行运算。

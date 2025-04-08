@@ -156,7 +156,7 @@ def submit_batch_task(file_ids):
     client = ZhipuAI(api_key=ZHIPU_API_KEY)
     batch_ids = []
     for i , file_id in enumerate(file_ids):
-        print(f"Submitting task for file {file_id}")
+        print(f"Submitting QAgen task for file {file_id}")
         create = client.batches.create(
             input_file_id=file_id,
             endpoint="/v4/chat/completions", 

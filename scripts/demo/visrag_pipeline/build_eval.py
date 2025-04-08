@@ -97,7 +97,7 @@ def upload_batchfile(file_path):
 
 def submit_batch_task(file_id):
     client = ZhipuAI(api_key=ZHIPU_API_KEY)
-    print(f"Submitting task for file {file_id}")
+    print(f"Submitting Eval task for file {file_id}")
     create = client.batches.create(
         input_file_id=file_id,
         endpoint="/v4/chat/completions", 
@@ -108,9 +108,9 @@ def submit_batch_task(file_id):
     )
     batch_id= create.id
     # # 记录file_ids为一个json文件，用于后续查询以及下载
-    with open(os.path.join(conf.RESULT_DIR, ANSWER_ID, 'batch_ids.json'), 'w') as f:
+    with open(os.path.join(conf.RESULT_DIR, ANSWER_ID, 'batch_id.json'), 'w') as f:
         json.dump(batch_id, f)
-    print(f"Submit Success! batch_id were saved to {os.path.join(conf.TEST_DIR, 'batch_id.json')}")
+    print(f"Submit Success! batch_id were saved to {os.path.join(conf.RESULT_DIR, ANSWER_ID, 'batch_id.json')}")
         
 
 file_path = create_batch_jsonl(os.path.join(conf.RESULT_DIR, ANSWER_ID))

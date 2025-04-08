@@ -69,8 +69,7 @@ def load_ret_models():
     print(f"VisRAG-Ret load begin...")
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True, cache_dir=conf.CACHE_DIR)
     
-    model = AutoModel.from_pretrained(model_path, trust_remote_code=True, device_map="auto",
-        attn_implementation='sdpa', torch_dtype=torch.bfloat16, cache_dir=conf.CACHE_DIR)
+    model = AutoModel.from_pretrained(model_path, trust_remote_code=True, attn_implementation='sdpa', torch_dtype=torch.bfloat16, cache_dir=conf.CACHE_DIR)
     
     model.to(device)
     model.eval()

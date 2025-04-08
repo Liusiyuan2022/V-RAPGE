@@ -3,8 +3,8 @@
 
 
 # BI EE
-TEST_FIELD = EE 
-# Qwen-VL-3B Qwen-VL-7B MiniCPM
+TEST_FIELD = BI
+# Qwen-VL-3B Qwen-VL-7B Qwen-VL-32B
 MODEL = Qwen-VL-3B
 # True False
 RAG_EN = True

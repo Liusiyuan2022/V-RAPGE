@@ -26,7 +26,7 @@ TEST_FIELD=${TEST_FIELD:-EE}
 MODEL_TYPE=${MODEL_TYPE:-Qwen-VL-3B}
 RAG_EN=${RAG_EN:-True}
 
-echo "启动VisRAG演示，使用 $NUM_GPUS 个GPU..."
+echo "启动VisRAG演示，使用 1 个GPU..."
 
 /home/liusiyuan/.conda/envs/VisRAG/bin/python \
     /datacenter/liusiyuan/VisRAG_test/scripts/demo/visrag_pipeline/answer.py \

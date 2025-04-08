@@ -75,6 +75,8 @@ def qwen_answer_question(images_path_topk, query, model, processor):
         return_tensors="pt",
     )
     
+    inputs = inputs.to(model.device)
+    
     model.eval()
 
     # 使用torch.no_grad()以节省内存
@@ -82,7 +84,7 @@ def qwen_answer_question(images_path_topk, query, model, processor):
     with torch.no_grad():
         # Inference: Generation of the output
         generated_ids = model.generate(**inputs, max_new_tokens=conf.MAX_TOKENS)
-        log_memory("after Qwen generate call")
+        # log_memory("after Qwen generate call")
         generated_ids_trimmed = [
             out_ids[len(in_ids):] for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
         ]

@@ -64,8 +64,8 @@ def main():
     
     if conf.MODEL_TYPE == "Qwen-VL-3B":
         # Qwen2-VL-2B-Instruct
-        model_path = "datacenter/models/Qwen/Qwen2.5-VL-3B-Instruct"
-        model_gen = Qwen2VLForConditionalGeneration.from_pretrained(
+        model_path = "/datacenter/models/Qwen/Qwen2.5-VL-3B-Instruct"
+        model_gen = Qwen2_5_VLForConditionalGeneration.from_pretrained(
             model_path, torch_dtype=torch.bfloat16, device_map="auto",cache_dir=conf.CACHE_DIR, attn_implementation="flash_attention_2"
         )
         # default processer
@@ -73,14 +73,14 @@ def main():
         
     elif conf.MODEL_TYPE == "Qwen-VL-7B":
         #Qwen2.5-VL-7B-Instruct
-        model_path = "datacenter/models/Qwen/Qwen2.5-VL-7B-Instruct"
+        model_path = "/datacenter/models/Qwen/Qwen2.5-VL-7B-Instruct"
         model_gen =  Qwen2_5_VLForConditionalGeneration.from_pretrained(
             model_path,torch_dtype=torch.bfloat16, device_map="auto",
             cache_dir=conf.CACHE_DIR, attn_implementation="flash_attention_2",
         )
         processor = AutoProcessor.from_pretrained(model_path, cache_dir=conf.CACHE_DIR)
     elif conf.MODEL_TYPE == "Qwen-VL-32B":
-        model_path = "datacenter/models/Qwen/Qwen2.5-VL-32B-Instruct"
+        model_path = "/datacenter/models/Qwen/Qwen2.5-VL-32B-Instruct"
         model_gen = Qwen2_5_VLForConditionalGeneration.from_pretrained(
             model_path, torch_dtype=torch.bfloat16, device_map="auto",
             cache_dir=conf.CACHE_DIR, attn_implementation="flash_attention_2",
