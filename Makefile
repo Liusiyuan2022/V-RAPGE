@@ -22,10 +22,17 @@ index:
 # local cmd
 
 PYTHON = /home/liusiyuan/.conda/envs/VisRAG/bin/python
+EXTRACT_SCRIPT = scripts/demo/visrag_pipeline/extract_facts.py
 QA_SCRIPT = scripts/demo/visrag_pipeline/build_QA.py
 PARSE_SCRIPT = scripts/demo/visrag_pipeline/parse_QA.py
 EVAL_SCRIPT = scripts/demo/visrag_pipeline/build_eval.py
 SCORE_SCRIPT = scripts/demo/visrag_pipeline/caculate_score.py
+
+upload_extract:
+	$(PYTHON) $(EXTRACT_SCRIPT) --action upload --test_field $(TEST_FIELD)
+download_extract:
+	$(PYTHON) $(EXTRACT_SCRIPT) --action download --test_field $(TEST_FIELD)
+
 
 upload_QAgen:
 	$(PYTHON) $(QA_SCRIPT) --action upload --test_field $(TEST_FIELD)
