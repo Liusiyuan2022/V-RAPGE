@@ -132,3 +132,16 @@ hf-download model <repo_id>
 
 在运行过程中发现2217390 Floating point exception(core dumped)
 结果发现是因为H20的卡需要较高版本的nvidia-cublas-cu112版本较低导致的，不支持精度bf16的运算，解决方法是将cublas的版本升级到11.8以上，或者使用fp32的精度进行运算。
+
+prompt的设计 api的时候不要给sys prompt，直接把需求放在user prompt里面就好了，sys prompt会影响模型的生成。
+
+
+taxonomy和iteration
+taxonomy的设计参考LongDocURL，但是需要注意，论文需要的是大模型对整个给定文档的处理检索能力，但是我的毕设实际上侧重于视觉文档作为外接知识库对于输出的增强能力，换句话说，不支持输入文档和图片，也不支持对给定文档的信息的处理测试，因此不存在Locating的能力测试，可以有Understanding和Reasoning的测试，此外进一步的细分也不能根据evidence的元素（布局，图片，文本，单页多页等）需要自己想点分类
+大类 Understanding Reasoning
+Understanding下面的小类：选择 填空 简答
+Reasoning下面的小类：情景分析下的简答，判断，计算题
+iteration：基于一些简单的文档知识点抽取QA对，对简答形式进行进一步强化，得到对应的taxonomy分类下的QA对，作为后续的测试数据集。
+
+拿到这些类别的数据了，质量不错，数量也很足够。接下来画个圆环图统计，以及进行模型的评估了
+OS：有的json里面caculation类别写的不太对，parse成功之后需要在文件里进行替换，调整为正确的类别。

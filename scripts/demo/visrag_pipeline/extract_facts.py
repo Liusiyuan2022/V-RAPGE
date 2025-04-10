@@ -68,7 +68,7 @@ def dump_jsonl(req_imgs, data_path ,file_path):
                     "model": "glm-4v-plus",
                     "messages": messages,
                     # "response_format":{'type': 'json_object'},
-                    "max_tokens": 1000
+                    "max_tokens": 2048
                 }
             }, ensure_ascii=False) + '\n')
 

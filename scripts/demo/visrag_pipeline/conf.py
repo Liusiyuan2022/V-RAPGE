@@ -1,5 +1,5 @@
 # choose the GPU ID,  0-7, use the free GPU
-GPU_ID = 1
+GPU_ID = 2
 
 DATASTORE = "scripts/demo/datastore"
 PDF_DIR ="scripts/demo/pdf_materials"
@@ -13,6 +13,7 @@ BASE_DIR = "/datacenter/liusiyuan/VisRAG_test"
 QA_BATCH_SIZE = 256
 QA_IMG_NUM = 2
 CONFIDENCE_THRESHOLD = 7
+N_TO_CHUNK = 3
 
 # TEST_FIELD="BI"
 TEST_FIELD="EE"
