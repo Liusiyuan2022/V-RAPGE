@@ -32,20 +32,19 @@ def load_qa_pairs(jsonl_file_path):
             # 解析每一行 JSON 数据
             data = json.loads(line.strip())
             # 将 question 和 answer 添加到 qa_pairs 列表
-            qa_pairs.append((
-                data.get("question", "N/A"),
-                data.get("answer", "N/A")
-            ))
+            qa_pairs.append(data)
     return qa_pairs
 
-def export_result(answer_path, query, images_path_topk, answer, reference_answer):
+def export_result(answer_path, qa_info, images_path_topk, response):
    
     with open(os.path.join(answer_path, f"answer.jsonl"), 'a') as f:
         f.write(json.dumps({
-            'query': query, 
+            'task': qa_info["task"],
+            'sub_type': qa_info["sub_type"],
+            'question': qa_info["question"],
             'retrieved_images': images_path_topk,
-            'answer': answer,
-            'reference': reference_answer
+            'answer': response,
+            'reference': qa_info["answer"],
         },ensure_ascii=False) + '\n')
     
 def main():
@@ -100,8 +99,10 @@ def main():
     os.makedirs(answer_path, exist_ok=True)
     
     
-    for query, reference_answer in tqdm(qa_pairs, desc="Processing QA Pairs"):
+    for qa_info in tqdm(qa_pairs, desc="Processing QA Pairs"):
         # 调用检索函数
+        query = qa_info["question"]
+        
         images_path_topk = retrieve(query, model_ret, tokenizer, device)
         
         
@@ -111,13 +112,13 @@ def main():
 
         # 生成答案
         if conf.MODEL_TYPE == "Qwen-VL-3B":
-            answer = qwen_answer_question(images_path_topk, query, model_gen, processor)
+            response = qwen_answer_question(images_path_topk, query, model_gen, processor)
         elif conf.MODEL_TYPE == "Qwen-VL-7B":
-            answer = qwen_answer_question(images_path_topk, query, model_gen, processor)
+            response = qwen_answer_question(images_path_topk, query, model_gen, processor)
         elif conf.MODEL_TYPE == "Qwen-VL-32B":
-            answer = qwen_answer_question(images_path_topk, query, model_gen, processor)
+            response = qwen_answer_question(images_path_topk, query, model_gen, processor)
         # print(answer)
-        export_result(answer_path, query, images_path_topk, answer, reference_answer)
+        export_result(answer_path, qa_info, images_path_topk, response)
         
     print(f"Answer saved at {answer_path}/{timestamp}/result.json")
 
@@ -125,7 +126,7 @@ if __name__ == "__main__":
     # 定义命令行参数
     parser = argparse.ArgumentParser(description="Modify conf.py settings dynamically.")
     parser.add_argument("--test_field", type=str, choices=["BI", "EE"], help="Set TEST_FIELD value.")
-    parser.add_argument("--model_type", type=str, choices=["Qwen-VL-3B", "Qwen-VL-7B", "MiniCPM"], help="Set MODEL_TYPE value.")
+    parser.add_argument("--model_type", type=str, choices=["Qwen-VL-3B", "Qwen-VL-7B", "Qwen-VL-32B"], help="Set MODEL_TYPE value.")
     # 当使用 type=bool 时，argparse 会尝试将字符串转换为布尔值，但在 Python 中，除了空字符串，几乎所有字符串转换为布尔值都是 True，包括字符串 "False"！
     # 因此这里使用lambda 函数来处理字符串转换为布尔值
     parser.add_argument("--rag_en", type=lambda x: x.lower() == "true", default=True, help="Set RAG_EN value.")

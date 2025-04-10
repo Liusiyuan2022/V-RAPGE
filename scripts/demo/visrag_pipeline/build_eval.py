@@ -4,6 +4,8 @@ import os
 import conf
 import base64
 import time
+import re
+import numpy
 # 老师的
 ZHIPU_API_KEY="46ed99244d8f49b5b2eb18ed9292d4df.mgThjPTMvrV7XQbh"
 # 我的
@@ -12,52 +14,66 @@ ZHIPU_API_KEY="46ed99244d8f49b5b2eb18ed9292d4df.mgThjPTMvrV7XQbh"
 
 ANSWER_ID = "Qwen-VL-3B_RAG_EE_20250402152431"
 
-PROMPT = """You are an impartial judge. 
-[Task]: Evaluate the quality of the AI assistant's response to the user's question based on helpfulness, relevance, accuracy, and detail with the reference answer and your knowledge.
-[Instructions]: 
-1. In the given format, "query“ means the user question, "answer" means the AI assistant's response, and "reference" means the reference answer.
-2. Begin your evaluation by providing a short explanation. Be as objective as possible.
-3. After providing your explanation, you must rate the response on a scale of <<1>> to <<10>>.
-4. Your output should be strictly follow the given format: "Explaination:xxxx" "Rating" : <<score>>
-[Response Language]: Chinese
-[Response Format]: Reply in the following JSON format,here's an example:
-```json
-{
-    "result": [
-        {
-            "Explaination": "AI的回答提到了生产者、消费者和分解者，这些都是生态系统的重要组成部分。然而，与参考答案相比，AI回答缺少了“非生物的物质和能量”这一重要部分，这使得回答不够全面。尽管如此，AI助手的回答在提到的部分上是准确和相关的。",
-            "Rating": <<7>> #score must follow the format <<rating>>
-        },
-    ]
-}
-```"""
+PROMPT= """你是一个资深公正的试卷评审员。
+[任务]: 根据参考答案和你的知识，评估AI助手对考题的回答质量，考虑以下几个方面：有用性、相关性、准确性和细节。
+[说明]:
+给定的json格式中，你只需要关注三个字段"question"是考题，"answer"是AI助手的回答，"reference"是参考答案。
+[评估] 开始评估时，请提供简短的解释。尽量客观。
+[评分规则]：
+- 对于选择题，如果选对就是10分，选错就是0分。
+- 对于判断题，如果选对就是10分，选错就是0分。
+- 对于填空题，根据答案和参考答案的相似性评分，给出0-10分。
+- 对于简答题，根据参考答案，考察AI助手的回答是否全面、准确、相关，给出0-10分。
+- 对于计算题，根据参考答案，考察AI助手的推理过程和计算结果是否正确，给出0-10分。
 
+以下是需要评分的json格式数据：
+{}
+
+[格式要求]：
+请返回json格式如下面的例子
+```json
+{{
+
+    "Explaination": "回答中，胞吞作用识别，囊泡形成，囊泡移动，囊泡融合的每个阶段都被提及，且描述清晰。AI助手的回答与参考答案一致，准确性高，相关性强，细节丰富。",
+    "Rating": <<10>> #打分必须遵循格式<<rating>>
+
+}}
+```
+
+"""
 
 
 def dump_jsonl(judges,file_path):
     with open(file_path, 'w') as f:
-        for i, judge_text in enumerate(judges):
-            content = judge_text
+        for i, data in enumerate(judges):
+            judge_data = data
+            
+            judge_tuple = {
+                "question": judge_data["question"],
+                "answer": judge_data["answer"],
+                "reference": judge_data["reference"]
+            }
+            judge_text = json.dumps(judge_tuple, 
+                                    ensure_ascii=False)
             messages = [
                 {
-                    "role": "system",
-                    "content": PROMPT
-                },
-                {
                     "role": "user",
-                    "content": content
+                    "content": PROMPT.format(judge_text),
                 }
             ]
             
+            # 构造对应的请求id，包括序号和任务类型，以便在回复的时候进行区分
+            req_id = f"request-{i}-<<{judge_data['task']}>>-<<{judge_data['sub_type']}>>"
+            
             f.write(json.dumps({
-                "custom_id": f"request-{i}",
+                "custom_id": req_id,
                 "method": "POST",
                 "url": "/v4/chat/completions",
                 "body": {
                     "model": "glm-4-plus",
                     "messages": messages,
-                    # "response_format":{'type': 'json_object'},
-                    "max_tokens": 1000
+                    "response_format":{'type': 'json_object'},
+                    "max_tokens": 2048
                 }
             }, ensure_ascii=False ) + '\n')
 
@@ -72,7 +88,7 @@ def create_batch_jsonl(answer_dir):
             data = json.loads(line.strip())
             # 去掉"retrieved_images"这个key
             data.pop("retrieved_images")
-            judges.append(json.dumps(data, ensure_ascii=False))
+            judges.append(data)
             
     file_path = os.path.join(answer_dir, "batch.jsonl")
     dump_jsonl(judges, file_path)
@@ -130,8 +146,99 @@ def download_output(output_file_id):
     content = client.files.content(output_file_id)
     # 使用write_to_file方法把返回结果写入文件
     # content.write_to_file("generated_answer.jsonl")
-    content.write_to_file(os.path.join(conf.RESULT_DIR, ANSWER_ID, f"eval.jsonl"))
+    eval_path = os.path.join(conf.RESULT_DIR, ANSWER_ID, 'eval.jsonl')
+    
+    content.write_to_file(eval_path)
     print(f"Download success! Content was saved to {os.path.join(conf.RESULT_DIR, ANSWER_ID, f'eval.jsonl')}")
+    # 解析 JSONL 文件并计算平均分数
+    calculate_score(eval_path)
+    
+    
+    
+
+def calculate_score(file_path):
+    """
+    Parse the input JSONL file and extract the text content.
+    """
+    i = 1 
+    scores = {}
+    with open(file_path, 'r') as f:
+        for line in f:
+            task_type = None
+            sub_type = None
+            data = json.loads(line)
+
+            # 检查是否有 "response" 和 "body" 字段
+            if "response" in data and "body" in data["response"]:
+                body = data["response"]["body"]
+                # 从request_id字段中提取任务类型
+                if "request_id" in body:
+                    request_id = body["request_id"]
+                    pattern = r"request-(\d+)-<<([^>]*)>>-<<([^>]*)>>"
+                    match = re.search(pattern, request_id)
+                    if match:
+                        task_type = match.group(2)
+                        sub_type = match.group(3)
+                    else:
+                        print(f"Failed to extract task type from request_id at line {i}")
+                    
+                # 检查是否有 "choices" 字段
+                if "choices" in body and len(body["choices"]) > 0:
+                    content = body["choices"][0]["message"]["content"]
+                    # 提取 JSON 格式的 "result"
+                try:
+                    match = re.search(r'<<(\d+)>>', content)
+                    if match:
+                        rating = int(match.group(1))  # 提取数字并转换为整数
+                        # 在对应类别中添加评分
+                        if task_type not in scores:
+                            scores[task_type] = {}
+                        if sub_type not in scores[task_type]:
+                            scores[task_type][sub_type] = []
+                        scores[task_type][sub_type].append(rating)
+                    else:
+                        print(f"re search failed at line {i}, content:\n{content}")
+                        
+                except json.JSONDecodeError:
+                    print(f"Failed to parse result content as JSON at line: {i}, content:\n content")
+            i += 1
+    # 输出每个任务类别的问题数量，平均分数，以json格式输出
+    results = {}
+    tot_questions = 0
+    tot_score = 0
+    for task_type, sub_types in scores.items():
+        results[task_type] = {}
+        type_tot_questions = 0
+        type_tot_score = 0
+        for sub_type, ratings in sub_types.items():
+            type_tot_questions += len(ratings)
+            type_tot_score += sum(ratings)
+            avg_score = numpy.mean(ratings)
+            results[task_type][sub_type] = {
+                "count": len(ratings),
+                "avg_score": avg_score
+            }
+        results[task_type]["total"] = {
+            "count": type_tot_questions,
+            "avg_score": type_tot_score / type_tot_questions if type_tot_questions > 0 else 0
+        }
+        tot_questions += type_tot_questions
+        tot_score += type_tot_score
+        # 在results[task_type]中添加总的评分和数量
+    results["total"] = {
+        "count": tot_questions,
+        "avg_score": tot_score / tot_questions if tot_questions > 0 else 0
+    }
+    output_path = os.path.join(conf.RESULT_DIR, ANSWER_ID, f'score.json')
+    with open(output_path, 'w') as f:
+        json.dump(results, f, ensure_ascii=False, indent=4)
+    print(f"Parse Sucess! Score results saved to {output_path}")
+    
+    
+    
+    
+    
+
 
 def upload_task():
         
