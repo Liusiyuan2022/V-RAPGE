@@ -26,7 +26,6 @@ EXTRACT_SCRIPT = scripts/demo/visrag_pipeline/extract_facts.py
 QA_SCRIPT = scripts/demo/visrag_pipeline/build_QA.py
 PARSE_SCRIPT = scripts/demo/visrag_pipeline/parse_QA.py
 EVAL_SCRIPT = scripts/demo/visrag_pipeline/build_eval.py
-SCORE_SCRIPT = scripts/demo/visrag_pipeline/caculate_score.py
 
 upload_extract:
 	$(PYTHON) $(EXTRACT_SCRIPT) --action upload --test_field $(TEST_FIELD)
@@ -39,8 +38,6 @@ upload_QAgen:
 
 download_QAgen:
 	$(PYTHON) $(QA_SCRIPT) --action download --test_field $(TEST_FIELD)
-parse:
-	$(PYTHON) $(PARSE_SCRIPT)
 
 
 ANSWER_ID = Qwen-VL-3B_RAG_BI_20250408072103
@@ -51,8 +48,6 @@ upload_eval:
 download_eval:
 	$(PYTHON) $(EVAL_SCRIPT) --action download --answer_id $(ANSWER_ID)
 
-score:
-	$(PYTHON) $(SCORE_SCRIPT) --answer_id $(ANSWER_ID)
 
 clean:
 	rm slurm-*.out
