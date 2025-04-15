@@ -178,9 +178,22 @@ def calculate_score(file_path):
                     match = re.search(pattern, request_id)
                     if match:
                         task_type = match.group(2)
-                        sub_type = match.group(3)
+                        sub_type = match.group(3).lower()
                     else:
                         print(f"Failed to extract task type from request_id at line {i}")
+                    # 检查任务类型是否合规
+                    if task_type == "Understanding" :
+                        if sub_type not in ["fill_in_the_blank", "multiple_choice", "short_answer"]:
+                            print(f"Invalid at line {i}: task_type {task_type}, sub_type {sub_type}")
+                            continue
+                    elif task_type == "Reasoning":
+                        if sub_type not in ["statement_judgment", "calculation", "short_answer"]:
+                            print(f"Invalid at line {i}: task_type {task_type}, sub_type {sub_type}")
+                            continue
+                    else :
+                        print(f"Invalid at line {i}: task_type {task_type}, sub_type {sub_type}")
+                        continue
+                    
                     
                 # 检查是否有 "choices" 字段
                 if "choices" in body and len(body["choices"]) > 0:
