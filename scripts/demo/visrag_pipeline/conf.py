@@ -1,5 +1,5 @@
 # choose the GPU ID,  0-7, use the free GPU
-GPU_ID = 2
+GPU_ID = 3
 
 DATASTORE = "scripts/demo/datastore"
 PDF_DIR ="scripts/demo/pdf_materials"
