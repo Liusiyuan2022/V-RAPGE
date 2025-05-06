@@ -6,6 +6,7 @@ import base64
 from PIL import Image
 from tqdm import tqdm
 import time
+import re
 # 老师的
 ZHIPU_API_KEY="46ed99244d8f49b5b2eb18ed9292d4df.mgThjPTMvrV7XQbh"
 # 我的
@@ -60,9 +61,11 @@ PROMPT_U =  """你是一个资深的考试出题人,面对一下的若干考点�
 ```"""
 
 
-def dump_jsonl(fact_chunks, file_path):
+def dump_jsonl(fact_srcs, file_path):
     with open(file_path, 'w') as f:
-        for i, fact_chunk in tqdm(enumerate(fact_chunks), desc="Creating batch requests", total=len(fact_chunks)):
+        for i, fact_srcs in tqdm(enumerate(fact_srcs), desc="Creating batch requests", total=len(fact_srcs)):
+            fact_chunk = fact_srcs["facts"]
+            source = fact_srcs["source"]
             for prompt in [PROMPT_R, PROMPT_U]:
                 content = prompt.format(fact_chunk)
                 messages = [
@@ -75,7 +78,7 @@ def dump_jsonl(fact_chunks, file_path):
                 task_class = "R" if prompt == PROMPT_R else "U"
                 
                 f.write(json.dumps({
-                    "custom_id": f"request-{i}-{task_class}",
+                    "custom_id": f"request-{i}-<{task_class}>-<{source}>",
                     "method": "POST",
                     "url": "/v4/chat/completions",
                     "body": {
@@ -92,12 +95,12 @@ def dump_jsonl(fact_chunks, file_path):
 def create_batch_jsonl(fact_path):
     # 找到index2img_filename.txt,每行提取出来,作为图片文件名的list
     # facts 将是一个list,每个元素是一个fact字符串
-    facts = json.loads(open(fact_path, 'r').read())
-    # 每k个作为一组,重新合并成一个字符串有1. 2. 3. 的格式
-    k = conf.N_TO_CHUNK
-    facts = ['\n'.join(facts[i:i + k]) for i in range(0, len(facts), k)]
+    # 以页面对应知识点为单位
+    # 这个文件是文本处理，在本实验条件中不需要考虑batch100M大小(已经足够)
+    fact_srcs = json.loads(open(fact_path, 'r').read())
+    
     file_path = os.path.join(conf.TEST_DIR, f'QAgen_batch_{conf.TEST_FIELD}.jsonl')
-    dump_jsonl(facts, file_path)
+    dump_jsonl(fact_srcs, file_path)
             
     return file_path
 
@@ -178,6 +181,16 @@ def parse_filter_jsonl(input_path):
             # 检查是否有 "response" 和 "body" 字段
             if "response" in data and "body" in data["response"]:
                 body = data["response"]["body"]
+                if "request_id" in body:
+                    request_id = body["request_id"]
+                    # 形如ssource<EEdesign.pdf_0.png>,提取
+                    pattern = r"request-(\d+)-<([^>]*)>-<([^>]*)>"
+                    match = re.search(pattern, request_id)
+                    if match:
+                        source = match.group(3)
+                    else:
+                        print(f"Failed to parse request_id at line: {i}, request_id: {request_id}")
+                        continue
                 
                 # 检查是否有 "choices" 字段
                 if "choices" in body and len(body["choices"]) > 0:
@@ -197,6 +210,7 @@ def parse_filter_jsonl(input_path):
                             
                             with open(output_path, 'a') as out_f:
                                 out_f.write(json.dumps({
+                                    "source": source,
                                     "task": task,
                                     "sub_type": sub_type,
                                     "question": question,

@@ -7,6 +7,7 @@ import base64
 from PIL import Image
 from tqdm import tqdm
 import time
+import re
 # 老师的
 ZHIPU_API_KEY="46ed99244d8f49b5b2eb18ed9292d4df.mgThjPTMvrV7XQbh"
 
@@ -61,9 +62,11 @@ def dump_jsonl(req_imgs, data_path ,file_path):
             ]
             
             # 根据图片来源设置custom_id
-            
+            request_id = "source"
+            for img_name in batch:
+                request_id += "<" + img_name + ">"
             f.write(json.dumps({
-                "custom_id": f"request-{i}",
+                "custom_id": request_id,
                 "method": "POST",
                 "url": "/v4/chat/completions",
                 "body": {
@@ -93,6 +96,7 @@ def create_batch_jsonl(data_path):
         
     
     # 每k个作为一组，组成一个请求
+    # 这里实际上设置成了单张图片
     k = conf.QA_IMG_NUM
     req_imgs = []
     line = 0
@@ -185,7 +189,7 @@ def parse_filter_jsonl(input_path):
     tot = 0
     low_conf = 0
     err_num = 0
-    facts = []
+    fact_srcs = []
     print(f"Parsing and Filtering JSONL file: {input_path}")  
     with open(input_path, 'r') as f:
         for line in f:
@@ -194,6 +198,21 @@ def parse_filter_jsonl(input_path):
             # 检查是否有 "response" 和 "body" 字段
             if "response" in data and "body" in data["response"]:
                 body = data["response"]["body"]
+                
+                if "request_id" in body:
+                    request_id = body["request_id"]
+                    # 形如ssource<EEdesign.pdf_0.png>,提取
+                    pattern = r"source<([^>]*)>"
+                    match = re.search(pattern, request_id)
+                    if match:
+                        source = match.group(1)
+                    else:
+                        print(f"Failed to parse request_id at line: {i}, request_id: {request_id}")
+                        continue
+                
+                
+                
+                
                 
                 # 检查是否有 "choices" 字段
                 if "choices" in body and len(body["choices"]) > 0:
@@ -210,10 +229,13 @@ def parse_filter_jsonl(input_path):
                           low_conf += 1
                           continue
                     if "facts" in result_data:
-                      facts.extend(result_data["facts"])
+                      fact_srcs.append({
+                            "source": source,
+                            "facts": result_data["facts"]
+                        })
                     
                 except json.JSONDecodeError:
-                    # print(f"Failed to parse result content as JSON at line: {i}, stripped_content:\n {stripped_content}")
+                    print(f"Failed to parse result content as JSON at line: {i}, stripped_content:\n{stripped_content}")
                     err_num += 1
             i += 1
     print(f"Parsed JSONL file and extracted text content to {input_path}")
@@ -221,7 +243,7 @@ def parse_filter_jsonl(input_path):
     # 将结果写入jsonl文件
     output_path = os.path.join(conf.TEST_DIR, f"filtered_facts_{conf.TEST_FIELD}.jsonl")
     with open(output_path, 'w') as out_f:
-        out_f.write(json.dumps(facts, ensure_ascii=False) + '\n')
+        out_f.write(json.dumps(fact_srcs, ensure_ascii=False) + '\n')
     print(f"Filtered facts were saved to {output_path}")
 
 def upload_task(data_path):
