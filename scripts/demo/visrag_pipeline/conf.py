@@ -12,7 +12,9 @@ TEST_DIR = "scripts/demo/test"
 BASE_DIR = "/datacenter/liusiyuan/VisRAG_test"
 QA_BATCH_SIZE = 512
 QA_IMG_NUM = 1
-CONFIDENCE_THRESHOLD = 7
+FACT_THRESHOLD = 7
+QA_QUALITY_THRESHOLD = 8
+
 N_TO_CHUNK = 3
 
 # TEST_FIELD="BI"

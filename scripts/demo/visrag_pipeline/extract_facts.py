@@ -226,7 +226,7 @@ def parse_filter_jsonl(input_path):
                     tot += 1
                     if "confidence" in result_data:
                       confidence = result_data["confidence"]
-                      if confidence < conf.CONFIDENCE_THRESHOLD:
+                      if confidence < conf.FACT_THRESHOLD:
                           low_conf += 1
                           continue
                     if "facts" in result_data:

@@ -23,7 +23,8 @@ index:
 
 PYTHON = /home/liusiyuan/.conda/envs/VisRAG/bin/python
 EXTRACT_SCRIPT = scripts/demo/visrag_pipeline/extract_facts.py
-QA_SCRIPT = scripts/demo/visrag_pipeline/build_QA.py
+QAGEN_SCRIPT = scripts/demo/visrag_pipeline/build_QA.py
+QACHECK_SCRIPT = scripts/demo/visrag_pipeline/check_QA.py
 PARSE_SCRIPT = scripts/demo/visrag_pipeline/parse_QA.py
 EVAL_SCRIPT = scripts/demo/visrag_pipeline/build_eval.py
 
@@ -34,10 +35,17 @@ download_extract:
 
 
 upload_QAgen:
-	$(PYTHON) $(QA_SCRIPT) --action upload --test_field $(TEST_FIELD)
+	$(PYTHON) $(QAGEN_SCRIPT) --action upload --test_field $(TEST_FIELD)
 
 download_QAgen:
-	$(PYTHON) $(QA_SCRIPT) --action download --test_field $(TEST_FIELD)
+	$(PYTHON) $(QAGEN_SCRIPT) --action download --test_field $(TEST_FIELD)
+
+upload_QAcheck:
+	$(PYTHON) $(QACHECK_SCRIPT) --action upload --test_field $(TEST_FIELD)
+
+download_QAcheck:
+	$(PYTHON) $(QACHECK_SCRIPT) --action download --test_field $(TEST_FIELD)
+
 
 
 ANSWER_ID = Qwen-VL-3B_RAG_BI_20250408072103
